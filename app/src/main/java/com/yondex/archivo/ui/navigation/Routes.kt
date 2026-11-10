@@ -31,3 +31,6 @@ data object TagsRoute
 
 @Serializable
 data object SettingsRoute
+
+@Serializable
+data class PdfReaderRoute(val fileId: Long)

@@ -18,11 +18,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.sharp.Add
+import androidx.compose.material.icons.sharp.Check
+import androidx.compose.material.icons.sharp.Folder
+import androidx.compose.material.icons.sharp.Home
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -42,10 +41,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.yondex.archivo.R
 import com.yondex.archivo.data.repository.TagRepository
 import com.yondex.archivo.data.repository.asTree
 import com.yondex.archivo.domain.model.Folder
@@ -56,7 +58,7 @@ fun TextInputDialog(
     title: String,
     label: String,
     initialValue: String = "",
-    confirmLabel: String = "Simpan",
+    confirmLabel: String? = null,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit,
 ) {
@@ -65,7 +67,8 @@ fun TextInputDialog(
     }
     val focusRequester = remember { FocusRequester() }
     val valid = value.text.isNotBlank()
-    AlertDialog(
+    val confirmText = confirmLabel ?: stringResource(R.string.action_save)
+    SketchAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
@@ -74,15 +77,16 @@ fun TextInputDialog(
                 onValueChange = { value = it },
                 label = { Text(label) },
                 singleLine = true,
+                shape = RectangleShape,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { if (valid) onConfirm(value.text.trim()) }),
                 modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
             )
         },
         confirmButton = {
-            TextButton(enabled = valid, onClick = { onConfirm(value.text.trim()) }) { Text(confirmLabel) }
+            TextButton(enabled = valid, onClick = { onConfirm(value.text.trim()) }) { Text(confirmText) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Batal") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 }
@@ -91,20 +95,21 @@ fun TextInputDialog(
 fun ConfirmDialog(
     title: String,
     message: String,
-    confirmLabel: String = "Hapus",
+    confirmLabel: String? = null,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
-    AlertDialog(
+    val confirmText = confirmLabel ?: stringResource(R.string.action_delete)
+    SketchAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(message) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(confirmLabel, color = MaterialTheme.colorScheme.error)
+                Text(confirmText, color = MaterialTheme.colorScheme.error)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Batal") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -116,14 +121,14 @@ fun FolderPickerDialog(
     onPick: (Long?) -> Unit,
 ) {
     val tree = remember(folders) { folders.asTree() }
-    AlertDialog(
+    SketchAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Pindahkan ke") },
+        title = { Text(stringResource(R.string.move_to)) },
         text = {
             LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
                 item {
                     FolderRow(
-                        name = "Beranda (tanpa folder)",
+                        name = stringResource(R.string.home_no_folder),
                         depth = 0,
                         isRoot = true,
                         selected = currentFolderId == null,
@@ -142,7 +147,7 @@ fun FolderPickerDialog(
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Batal") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -155,10 +160,14 @@ private fun FolderRow(name: String, depth: Int, isRoot: Boolean, selected: Boole
             .clickable(onClick = onClick)
             .padding(start = (depth * 16).dp, top = 12.dp, bottom = 12.dp),
     ) {
-        Icon(if (isRoot) Icons.Outlined.Home else Icons.Outlined.Folder, contentDescription = null)
+        if (isRoot) {
+            Icon(Icons.Sharp.Home, contentDescription = null)
+        } else {
+            Icon(Icons.Sharp.Folder, contentDescription = null)
+        }
         Spacer(Modifier.width(12.dp))
         Text(name, modifier = Modifier.weight(1f))
-        if (selected) Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        if (selected) Icon(Icons.Sharp.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -189,17 +198,18 @@ fun TagPickerDialog(
         }
     }
 
-    AlertDialog(
+    SketchAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Tag") },
+        title = { Text(stringResource(R.string.action_tag)) },
         text = {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = newTag,
                         onValueChange = { newTag = it },
-                        label = { Text("Tag baru") },
+                        label = { Text(stringResource(R.string.new_tag)) },
                         singleLine = true,
+                        shape = RectangleShape,
                         modifier = Modifier.weight(1f),
                     )
                     IconButton(
@@ -209,13 +219,13 @@ fun TagPickerDialog(
                             onCreateTag(newTag.trim())
                             newTag = ""
                         },
-                    ) { Icon(Icons.Default.Add, contentDescription = "Tambah tag") }
+                    ) { Icon(Icons.Sharp.Add, contentDescription = stringResource(R.string.add_tag)) }
                 }
                 Spacer(Modifier.padding(4.dp))
                 HorizontalDivider()
                 if (tags.isEmpty()) {
                     Text(
-                        "Belum ada tag.",
+                        stringResource(R.string.no_tags_yet),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(vertical = 16.dp),
                     )
@@ -239,7 +249,7 @@ fun TagPickerDialog(
                             )
                             TagDot(Color(tag.color))
                             Spacer(Modifier.width(8.dp))
-                            Text(if (isUndecided) "${tag.name} (sebagian)" else tag.name)
+                            Text(if (isUndecided) stringResource(R.string.tag_partial, tag.name) else tag.name)
                         }
                     }
                 }
@@ -251,9 +261,9 @@ fun TagPickerDialog(
                 val added = selected.intersect(decided)
                 val removed = decided - selected
                 onConfirm(added, removed)
-            }) { Text("Simpan") }
+            }) { Text(stringResource(R.string.action_save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Batal") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -267,7 +277,7 @@ fun TagEditorDialog(
 ) {
     var name by remember { mutableStateOf(initialName) }
     var color by remember { mutableStateOf(initialColor) }
-    AlertDialog(
+    SketchAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
@@ -275,8 +285,9 @@ fun TagEditorDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nama tag") },
+                    label = { Text(stringResource(R.string.tag_name)) },
                     singleLine = true,
+                    shape = RectangleShape,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 TagRepository.PALETTE.chunked(6).forEach { row ->
@@ -289,7 +300,7 @@ fun TagEditorDialog(
                                     .background(Color(option), CircleShape)
                                     .clickable { color = option },
                             ) {
-                                if (option == color) Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
+                                if (option == color) Icon(Icons.Sharp.Check, contentDescription = null, tint = Color.White)
                             }
                         }
                     }
@@ -297,8 +308,10 @@ fun TagEditorDialog(
             }
         },
         confirmButton = {
-            TextButton(enabled = name.isNotBlank(), onClick = { onConfirm(name.trim(), color) }) { Text("Simpan") }
+            TextButton(enabled = name.isNotBlank(), onClick = { onConfirm(name.trim(), color) }) {
+                Text(stringResource(R.string.action_save))
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Batal") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }

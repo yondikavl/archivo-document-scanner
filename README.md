@@ -7,6 +7,7 @@ Scanner dokumen offline untuk Android. Ambil foto halaman, deteksi tepi otomatis
 ## Fitur
 
 - **Scan kamera** — preview CameraX, deteksi tepi live (OpenCV), auto-capture saat dokumen stabil, senter, multi-halaman
+- **Baca PDF** — impor file PDF, filter kategori di beranda (Semua / Scans / PDF), viewer PDF offline
 - **Import galeri** — pilih beberapa gambar lewat Photo Picker
 - **Crop perspektif** — sesuaikan sudut dokumen secara manual atau deteksi ulang otomatis
 - **Filter** — Original, Scan warna, Grayscale, Hitam-putih
@@ -14,7 +15,7 @@ Scanner dokumen offline untuk Android. Ambil foto halaman, deteksi tepi otomatis
 - **Organisasi** — folder bersarang, tag berwarna, tampilan grid/list, urutkan, multi-select
 - **Pencarian** — full-text search (FTS) di judul + hasil OCR, dengan filter folder/tag
 - **Export** — PDF (A4 / Letter / sesuai gambar), JPG, PNG, atau TXT; bagikan atau simpan via SAF / galeri
-- **Pengaturan** — tema (sistem/terang/gelap), warna dinamis Material You, filter bawaan, OCR otomatis, kualitas PDF
+- **Pengaturan** — bahasa (sistem/English/Indonesia), tema (sistem/terang/gelap), warna dinamis Material You, filter bawaan, OCR otomatis, kualitas PDF
 
 ## Tech stack
 

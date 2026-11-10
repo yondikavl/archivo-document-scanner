@@ -48,7 +48,23 @@ enum class OcrStatus { NONE, PENDING, RUNNING, DONE, FAILED }
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
+enum class AppLanguage { SYSTEM, ENGLISH, INDONESIAN }
+
 enum class ViewMode { GRID, LIST }
+
+enum class LibraryFileType { PDF, WORD }
+
+enum class HomeFilter { ALL, SCANS, PDF }
+
+data class LibraryFile(
+    val id: Long,
+    val title: String,
+    val type: LibraryFileType,
+    val path: String,
+    val sizeBytes: Long,
+    val createdAt: Long,
+    val openedAt: Long,
+)
 
 enum class SortOrder { UPDATED_DESC, CREATED_DESC, NAME_ASC, PAGES_DESC }
 
@@ -62,6 +78,7 @@ enum class ExportQuality(val maxDimension: Int, val jpegQuality: Int) {
 
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val appLanguage: AppLanguage = AppLanguage.SYSTEM,
     val dynamicColor: Boolean = false,
     val defaultFilter: PageFilter = PageFilter.ENHANCE,
     val pdfPageSize: PdfPageSize = PdfPageSize.A4,

@@ -1,41 +1,51 @@
 package com.yondex.archivo.ui.tags
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.Label
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.automirrored.sharp.ArrowBack
+import androidx.compose.material.icons.automirrored.sharp.Label
+import androidx.compose.material.icons.sharp.Add
+import androidx.compose.material.icons.sharp.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.yondex.archivo.R
 import com.yondex.archivo.data.repository.TagRepository
 import com.yondex.archivo.domain.model.Tag
 import com.yondex.archivo.ui.components.ConfirmDialog
 import com.yondex.archivo.ui.components.EmptyState
+import com.yondex.archivo.ui.components.SketchCard
+import com.yondex.archivo.ui.components.SketchFab
 import com.yondex.archivo.ui.components.TagDot
 import com.yondex.archivo.ui.components.TagEditorDialog
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -74,62 +84,84 @@ fun TagsScreen(onBack: () -> Unit, viewModel: TagsViewModel = hiltViewModel()) {
     var dialog by remember { mutableStateOf<TagDialog?>(null) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Kelola tag") },
+                title = { Text(stringResource(R.string.manage_tags)) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali") }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Sharp.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    }
                 },
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { dialog = TagDialog.Create }) {
-                Icon(Icons.Default.Add, contentDescription = "Tag baru")
+            SketchFab(onClick = { dialog = TagDialog.Create }) {
+                Icon(Icons.Sharp.Add, contentDescription = stringResource(R.string.new_tag))
             }
         },
     ) { padding ->
         if (tags.isEmpty()) {
             EmptyState(
-                icon = Icons.AutoMirrored.Outlined.Label,
-                title = "Belum ada tag",
-                message = "Tag membantu mengelompokkan dokumen lintas folder.",
+                icon = Icons.AutoMirrored.Sharp.Label,
+                title = stringResource(R.string.empty_tags_title),
+                message = stringResource(R.string.empty_tags_message),
                 modifier = Modifier.padding(padding).padding(top = 64.dp),
             )
         }
-        LazyColumn(contentPadding = PaddingValues(bottom = 88.dp), modifier = Modifier.fillMaxSize().padding(padding)) {
+        LazyColumn(
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxSize().padding(padding),
+        ) {
             items(tags, key = { it.first.id }) { (tag, count) ->
-                ListItem(
-                    headlineContent = { Text(tag.name) },
-                    supportingContent = { Text("$count dokumen") },
-                    leadingContent = { TagDot(Color(tag.color), Modifier.size(16.dp)) },
-                    trailingContent = {
-                        IconButton(onClick = { dialog = TagDialog.Delete(tag) }) {
-                            Icon(Icons.Outlined.Delete, contentDescription = "Hapus")
+                SketchCard(
+                    onClick = { dialog = TagDialog.Edit(tag) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    ) {
+                        TagDot(Color(tag.color), Modifier.size(16.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(tag.name, style = MaterialTheme.typography.titleSmall)
+                            Text(
+                                stringResource(R.string.documents_count, count),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
-                    },
-                    modifier = Modifier.clickable { dialog = TagDialog.Edit(tag) },
-                )
+                        IconButton(onClick = { dialog = TagDialog.Delete(tag) }) {
+                            Icon(Icons.Sharp.Delete, contentDescription = stringResource(R.string.action_delete))
+                        }
+                    }
+                }
             }
         }
     }
 
     when (val current = dialog) {
         TagDialog.Create -> TagEditorDialog(
-            title = "Tag baru",
+            title = stringResource(R.string.new_tag),
             initialColor = TagRepository.PALETTE[tags.size % TagRepository.PALETTE.size],
             onDismiss = { dialog = null },
             onConfirm = { name, color -> viewModel.create(name, color); dialog = null },
         )
         is TagDialog.Edit -> TagEditorDialog(
-            title = "Edit tag",
+            title = stringResource(R.string.edit_tag),
             initialName = current.tag.name,
             initialColor = current.tag.color,
             onDismiss = { dialog = null },
             onConfirm = { name, color -> viewModel.update(current.tag.copy(name = name, color = color)); dialog = null },
         )
         is TagDialog.Delete -> ConfirmDialog(
-            title = "Hapus tag?",
-            message = "Tag \"${current.tag.name}\" akan dilepas dari semua dokumen.",
+            title = stringResource(R.string.delete_tag_title),
+            message = stringResource(R.string.delete_tag_message, current.tag.name),
             onDismiss = { dialog = null },
             onConfirm = { viewModel.delete(current.tag); dialog = null },
         )

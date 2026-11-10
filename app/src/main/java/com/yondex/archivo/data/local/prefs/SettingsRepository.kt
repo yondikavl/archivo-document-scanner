@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.yondex.archivo.domain.model.AppLanguage
 import com.yondex.archivo.domain.model.AppSettings
 import com.yondex.archivo.domain.model.ExportQuality
 import com.yondex.archivo.domain.model.PageFilter
@@ -33,6 +34,7 @@ class SettingsRepository @Inject constructor(
         val defaults = AppSettings()
         AppSettings(
             themeMode = prefs[Keys.THEME].toEnum(defaults.themeMode),
+            appLanguage = prefs[Keys.LANGUAGE].toEnum(defaults.appLanguage),
             dynamicColor = prefs[Keys.DYNAMIC_COLOR] ?: defaults.dynamicColor,
             defaultFilter = prefs[Keys.DEFAULT_FILTER].toEnum(defaults.defaultFilter),
             pdfPageSize = prefs[Keys.PDF_PAGE_SIZE].toEnum(defaults.pdfPageSize),
@@ -46,6 +48,7 @@ class SettingsRepository @Inject constructor(
     suspend fun current(): AppSettings = settings.first()
 
     suspend fun setThemeMode(value: ThemeMode) = put(Keys.THEME, value.name)
+    suspend fun setAppLanguage(value: AppLanguage) = put(Keys.LANGUAGE, value.name)
     suspend fun setDynamicColor(value: Boolean) = put(Keys.DYNAMIC_COLOR, value)
     suspend fun setDefaultFilter(value: PageFilter) = put(Keys.DEFAULT_FILTER, value.name)
     suspend fun setPdfPageSize(value: PdfPageSize) = put(Keys.PDF_PAGE_SIZE, value.name)
@@ -60,6 +63,7 @@ class SettingsRepository @Inject constructor(
 
     private object Keys {
         val THEME = stringPreferencesKey("theme_mode")
+        val LANGUAGE = stringPreferencesKey("app_language")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
         val DEFAULT_FILTER = stringPreferencesKey("default_filter")
         val PDF_PAGE_SIZE = stringPreferencesKey("pdf_page_size")

@@ -26,6 +26,16 @@ class FileStorage @Inject constructor(
     fun documentDir(documentId: Long): File =
         File(context.filesDir, "documents/$documentId").apply { mkdirs() }
 
+    fun libraryDir(): File =
+        File(context.filesDir, "library").apply { mkdirs() }
+
+    fun newLibraryFile(name: String): File =
+        File(libraryDir(), "${UUID.randomUUID()}_$name")
+
+    fun deleteLibraryFile(path: String) {
+        File(path).delete()
+    }
+
     fun newPageFile(documentId: Long, prefix: String): File =
         File(documentDir(documentId), "${prefix}_${UUID.randomUUID()}.jpg")
 

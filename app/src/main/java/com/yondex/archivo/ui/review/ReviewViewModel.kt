@@ -1,14 +1,17 @@
 package com.yondex.archivo.ui.review
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yondex.archivo.R
 import com.yondex.archivo.data.file.FileStorage
 import com.yondex.archivo.data.repository.DocumentRepository
 import com.yondex.archivo.scanner.ImageProcessor
 import com.yondex.archivo.scanner.ScanPage
 import com.yondex.archivo.scanner.ScanSession
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +34,7 @@ sealed interface ReviewEvent {
 
 @HiltViewModel
 class ReviewViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val session: ScanSession,
     private val processor: ImageProcessor,
     private val storage: FileStorage,
@@ -65,7 +69,7 @@ class ReviewViewModel @Inject constructor(
                 session.replace(page.copy(rotation = rotation, processedPath = output.absolutePath))
             } catch (e: Exception) {
                 Log.e("ReviewViewModel", "Rotate failed", e)
-                _events.tryEmit(ReviewEvent.Error("Gagal memutar halaman"))
+                _events.tryEmit(ReviewEvent.Error(context.getString(R.string.error_rotate)))
             } finally {
                 _busyPages.update { it - pageId }
             }
@@ -96,7 +100,7 @@ class ReviewViewModel @Inject constructor(
                 _events.emit(ReviewEvent.Saved(documentId, targetDocument == ScanSession.NO_ID))
             } catch (e: Exception) {
                 Log.e("ReviewViewModel", "Save failed", e)
-                _events.emit(ReviewEvent.Error("Gagal menyimpan dokumen"))
+                _events.emit(ReviewEvent.Error(context.getString(R.string.error_save_document)))
             } finally {
                 _saving.value = false
             }

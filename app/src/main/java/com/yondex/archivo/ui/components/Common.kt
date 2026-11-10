@@ -13,32 +13,34 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.sharp.CheckCircle
+import androidx.compose.material.icons.sharp.Description
+import androidx.compose.material.icons.sharp.Folder as FolderIcon
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
+import com.yondex.archivo.R
 import com.yondex.archivo.domain.model.Document
 import com.yondex.archivo.domain.model.Folder
 import com.yondex.archivo.domain.model.Tag
@@ -51,17 +53,24 @@ fun formatDate(timestamp: Long): String =
 
 @Composable
 fun TagDot(color: Color, modifier: Modifier = Modifier) {
-    Box(modifier.size(10.dp).background(color, CircleShape))
+    Box(
+        modifier
+            .size(10.dp)
+            .border(1.dp, SketchInk, CircleShape)
+            .background(color, CircleShape),
+    )
 }
 
 @Composable
 fun TagLabel(tag: Tag, modifier: Modifier = Modifier) {
     val color = Color(tag.color)
+    val shape = RectangleShape
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
-            .clip(RoundedCornerShape(50))
-            .background(color.copy(alpha = 0.14f))
+            .clip(shape)
+            .background(color.copy(alpha = 0.12f))
+            .border(1.dp, SketchInk, shape)
             .padding(horizontal = 10.dp, vertical = 4.dp),
     ) {
         TagDot(color, Modifier.size(6.dp))
@@ -90,22 +99,32 @@ fun EmptyState(icon: ImageVector, title: String, message: String, modifier: Modi
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
-        modifier = modifier.fillMaxWidth().padding(32.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 40.dp),
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(88.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-        ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                modifier = Modifier.size(40.dp),
-                tint = MaterialTheme.colorScheme.primary,
+        Box(Modifier.size(88.dp + SketchShadowOffset)) {
+            Box(
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(88.dp)
+                    .background(SketchInk, RectangleShape),
             )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .size(88.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainerLowest, RectangleShape)
+                    .sketchBorder(RectangleShape, SketchInk, SketchStroke),
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(36.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(22.dp))
         Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
         Text(
@@ -121,7 +140,7 @@ fun EmptyState(icon: ImageVector, title: String, message: String, modifier: Modi
 fun Thumbnail(path: String?, modifier: Modifier = Modifier) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest),
+        modifier = modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         if (path != null) {
             AsyncImage(
@@ -132,11 +151,40 @@ fun Thumbnail(path: String?, modifier: Modifier = Modifier) {
             )
         } else {
             Icon(
-                Icons.Outlined.Description,
+                Icons.Sharp.Description,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f),
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
                 modifier = Modifier.size(28.dp),
             )
+        }
+    }
+}
+
+@Composable
+private fun SketchFrame(
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val shape = RectangleShape
+    val stroke = if (selected) MaterialTheme.colorScheme.primary else SketchInk
+    Box(modifier.padding(end = SketchShadowOffset, bottom = SketchShadowOffset)) {
+        Box(
+            Modifier
+                .matchParentSize()
+                .offset(x = SketchShadowOffset, y = SketchShadowOffset)
+                .clip(shape)
+                .background(SketchInk)
+                .zIndex(0f),
+        )
+        Box(
+            Modifier
+                .zIndex(1f)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
+                .border(if (selected) 2.dp else SketchStroke, stroke, shape),
+        ) {
+            content()
         }
     }
 }
@@ -150,58 +198,60 @@ fun DocumentGridCard(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = MaterialTheme.shapes.medium
-    Card(
-        shape = shape,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp, pressedElevation = 2.dp),
-        modifier = modifier
-            .clip(shape)
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .then(
-                if (selected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, shape)
-                else Modifier
-            ),
-    ) {
-        Box {
-            Thumbnail(
-                document.coverPath,
+    SketchFrame(selected = selected, modifier = modifier) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(0.72f)
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        ) {
+            Thumbnail(document.coverPath, Modifier.fillMaxSize())
+            Box(
                 Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(0.78f)
-                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color.Transparent,
+                            0.5f to Color.Transparent,
+                            1f to Color.Black.copy(alpha = 0.78f),
+                        ),
+                    ),
             )
             if (selected) SelectedBadge(Modifier.align(Alignment.TopEnd).padding(10.dp))
-            Surface(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.92f),
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(50),
-                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp),
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(10.dp)
+                    .border(1.dp, Color.White.copy(alpha = 0.7f), RectangleShape)
+                    .background(Color.Black.copy(alpha = 0.35f), RectangleShape)
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
             ) {
                 Text(
-                    "${document.pageCount} hal",
+                    stringResource(R.string.pages_short, document.pageCount),
                     style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                    color = Color.White,
                 )
             }
-        }
-        Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
-            Text(
-                document.title,
-                style = MaterialTheme.typography.titleSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(2.dp))
-            Text(
-                formatDate(document.updatedAt),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-            )
-            if (document.tags.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                TagRow(document.tags, max = 2)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .padding(12.dp),
+            ) {
+                Text(
+                    document.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    formatDate(document.updatedAt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.78f),
+                    maxLines = 1,
+                )
             }
         }
     }
@@ -217,31 +267,22 @@ fun DocumentListItem(
     modifier: Modifier = Modifier,
     subtitle: (@Composable () -> Unit)? = null,
 ) {
-    val shape = MaterialTheme.shapes.medium
-    Surface(
-        shape = shape,
-        color = if (selected) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerLowest
-        },
-        tonalElevation = if (selected) 0.dp else 1.dp,
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
-    ) {
+    SketchFrame(selected = selected, modifier = modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(10.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                .padding(10.dp),
         ) {
             Box {
                 Thumbnail(
                     document.coverPath,
                     Modifier
-                        .width(60.dp)
+                        .width(64.dp)
                         .aspectRatio(0.78f)
-                        .clip(RoundedCornerShape(10.dp)),
+                        .clip(RectangleShape)
+                        .border(SketchStroke, SketchInk, RectangleShape),
                 )
                 if (selected) SelectedBadge(Modifier.align(Alignment.Center))
             }
@@ -255,7 +296,7 @@ fun DocumentListItem(
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    "${document.pageCount} halaman • ${formatDate(document.updatedAt)}",
+                    stringResource(R.string.pages_meta, document.pageCount, formatDate(document.updatedAt)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -279,23 +320,24 @@ fun FolderItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        tonalElevation = 1.dp,
-        modifier = modifier
-            .clip(MaterialTheme.shapes.medium)
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(14.dp)) {
+    SketchFrame(selected = false, modifier = modifier.fillMaxWidth()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                .padding(14.dp),
+        ) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(42.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
+                    .size(46.dp)
+                    .clip(RectangleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .border(SketchStroke, SketchInk, RectangleShape),
             ) {
                 Icon(
-                    Icons.Outlined.Folder,
+                    Icons.Sharp.FolderIcon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                 )
@@ -309,7 +351,7 @@ fun FolderItem(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    "$documentCount dokumen",
+                    stringResource(R.string.documents_count, documentCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -321,9 +363,12 @@ fun FolderItem(
 @Composable
 private fun SelectedBadge(modifier: Modifier = Modifier) {
     Icon(
-        Icons.Default.CheckCircle,
-        contentDescription = "Dipilih",
+        Icons.Sharp.CheckCircle,
+        contentDescription = stringResource(R.string.cd_selected),
         tint = MaterialTheme.colorScheme.primary,
-        modifier = modifier.background(MaterialTheme.colorScheme.surface, CircleShape),
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest, CircleShape)
+            .border(1.dp, SketchInk, CircleShape)
+            .padding(1.dp),
     )
 }

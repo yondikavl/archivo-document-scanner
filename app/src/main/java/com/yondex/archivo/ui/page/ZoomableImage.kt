@@ -8,6 +8,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -20,8 +21,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.size.Precision
+import coil3.size.Size
 import java.io.File
 
 /**
@@ -29,15 +35,49 @@ import java.io.File
  * pager while the image is not zoomed.
  */
 @Composable
-fun ZoomableImage(path: String, contentDescription: String?, modifier: Modifier = Modifier) {
+fun ZoomableImage(
+    path: String,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    onZoomChanged: (Boolean) -> Unit = {},
+) {
     var scale by remember(path) { mutableFloatStateOf(1f) }
     var offset by remember(path) { mutableStateOf(Offset.Zero) }
     var size by remember { mutableStateOf(IntSize.Zero) }
+    val context = LocalContext.current
+    val zoomed = scale > 1.01f
+
+    LaunchedEffect(path) {
+        onZoomChanged(false)
+    }
+    LaunchedEffect(zoomed) {
+        onZoomChanged(zoomed)
+    }
 
     fun clamp(value: Offset, currentScale: Float): Offset {
+        if (size.width == 0 || size.height == 0 || currentScale <= 1f) return Offset.Zero
         val maxX = size.width * (currentScale - 1f) / 2f
         val maxY = size.height * (currentScale - 1f) / 2f
         return Offset(value.x.coerceIn(-maxX, maxX), value.y.coerceIn(-maxY, maxY))
+    }
+
+    val imageRequest = remember(path, size.width, size.height) {
+        val requestSize = if (size.width > 0 && size.height > 0) {
+            // 2× viewport keeps pinch-zoom sharp without decoding full scan resolution.
+            Size(
+                (size.width * 2).coerceAtMost(4096),
+                (size.height * 2).coerceAtMost(4096),
+            )
+        } else {
+            Size.ORIGINAL
+        }
+        ImageRequest.Builder(context)
+            .data(File(path))
+            .size(requestSize)
+            .precision(Precision.INEXACT)
+            .crossfade(false)
+            .memoryCacheKey(path)
+            .build()
     }
 
     Box(
@@ -73,7 +113,7 @@ fun ZoomableImage(path: String, contentDescription: String?, modifier: Modifier 
             },
     ) {
         AsyncImage(
-            model = File(path),
+            model = imageRequest,
             contentDescription = contentDescription,
             contentScale = ContentScale.Fit,
             modifier = Modifier

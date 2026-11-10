@@ -1,5 +1,6 @@
 package com.yondex.archivo.ui.document
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -8,6 +9,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.yondex.archivo.R
 import com.yondex.archivo.data.file.FileStorage
 import com.yondex.archivo.data.local.prefs.SettingsRepository
 import com.yondex.archivo.data.repository.DocumentRepository
@@ -24,6 +26,7 @@ import com.yondex.archivo.pdf.ExportManager
 import com.yondex.archivo.pdf.ImageFormat
 import com.yondex.archivo.ui.navigation.DocumentRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -34,11 +37,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class ExportFormat(val label: String, val mimeType: String) {
-    PDF("PDF", "application/pdf"),
-    JPG("JPG", "image/jpeg"),
-    PNG("PNG", "image/png"),
-    TXT("Teks", "text/plain"),
+enum class ExportFormat(val mimeType: String) {
+    PDF("application/pdf"),
+    JPG("image/jpeg"),
+    PNG("image/png"),
+    TXT("text/plain"),
 }
 
 data class ExportOptions(
@@ -67,6 +70,7 @@ sealed interface DocumentEvent {
 @HiltViewModel
 class DocumentViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
+    @ApplicationContext private val context: Context,
     private val documentRepository: DocumentRepository,
     private val tagRepository: TagRepository,
     folderRepository: FolderRepository,
@@ -112,7 +116,7 @@ class DocumentViewModel @Inject constructor(
 
     fun runOcr() = viewModelScope.launch {
         documentRepository.requestOcr(documentId)
-        _events.emit(DocumentEvent.Message("OCR dijalankan di latar belakang"))
+        _events.emit(DocumentEvent.Message(context.getString(R.string.ocr_started)))
     }
 
     fun delete() = viewModelScope.launch {
@@ -151,13 +155,13 @@ class DocumentViewModel @Inject constructor(
                 else -> exportManager.writePdf(document, pages, options.pageSize, options.quality, stream)
             }
         }
-        _events.emit(DocumentEvent.Message("File tersimpan"))
+        _events.emit(DocumentEvent.Message(context.getString(R.string.file_saved)))
     }
 
     fun saveImagesToGallery(options: ExportOptions) = export { (document, pages) ->
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val count = exportManager.saveImagesToGallery(document, pages, options.format.toImageFormat())
-            _events.emit(DocumentEvent.Message("$count gambar disimpan ke Galeri › Pictures/Archivo"))
+            _events.emit(DocumentEvent.Message(context.getString(R.string.images_saved_gallery, count)))
         }
     }
 
@@ -171,7 +175,7 @@ class DocumentViewModel @Inject constructor(
                 block(document to state.pages)
             } catch (e: Exception) {
                 Log.e("DocumentViewModel", "Export failed", e)
-                _events.emit(DocumentEvent.Message("Export gagal: ${e.message}"))
+                _events.emit(DocumentEvent.Message(context.getString(R.string.export_failed, e.message.orEmpty())))
             } finally {
                 _exporting.value = false
             }

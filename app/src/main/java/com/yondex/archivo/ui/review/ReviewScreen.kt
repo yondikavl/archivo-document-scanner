@@ -16,30 +16,26 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.outlined.AddAPhoto
-import androidx.compose.material.icons.outlined.Crop
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.automirrored.outlined.RotateRight
-import androidx.compose.material.icons.outlined.DocumentScanner
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.automirrored.sharp.ArrowBack
+import androidx.compose.material.icons.automirrored.sharp.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.sharp.KeyboardArrowRight
+import androidx.compose.material.icons.sharp.Check
+import androidx.compose.material.icons.sharp.AddAPhoto
+import androidx.compose.material.icons.sharp.Crop
+import androidx.compose.material.icons.sharp.Delete
+import androidx.compose.material.icons.automirrored.sharp.RotateRight
+import androidx.compose.material.icons.sharp.DocumentScanner
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,15 +45,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.yondex.archivo.R
 import com.yondex.archivo.scanner.ScanPage
 import com.yondex.archivo.ui.components.EmptyState
+import com.yondex.archivo.ui.components.SketchCard
+import com.yondex.archivo.ui.components.SketchFilledButton
+import com.yondex.archivo.ui.components.SketchInk
+import com.yondex.archivo.ui.components.SketchOutlinedButton
+import com.yondex.archivo.ui.components.SketchStroke
 import com.yondex.archivo.ui.components.TextInputDialog
+import com.yondex.archivo.ui.components.sketchBorder
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,43 +89,62 @@ fun ReviewScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Tinjau ${pages.size} halaman") },
+                title = { Text(stringResource(R.string.review_title, pages.size)) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali") }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Sharp.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    }
                 },
             )
         },
         bottomBar = {
-            BottomAppBar {
-                OutlinedButton(onClick = onBack, modifier = Modifier.padding(start = 8.dp)) {
-                    Icon(Icons.Outlined.AddAPhoto, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Tambah")
-                }
-                Spacer(Modifier.weight(1f))
-                Button(
-                    enabled = pages.isNotEmpty() && !saving && busy.isEmpty(),
-                    onClick = { if (viewModel.isAddingToExisting) viewModel.save(null) else askTitle = true },
-                    modifier = Modifier.padding(end = 8.dp),
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 0.dp,
+                tonalElevation = 0.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .sketchBorder(RectangleShape, SketchInk, SketchStroke),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
                 ) {
-                    if (saving) {
-                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    } else {
-                        Icon(Icons.Default.Check, contentDescription = null)
+                    SketchOutlinedButton(onClick = onBack) {
+                        Icon(Icons.Sharp.AddAPhoto, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.action_add))
                     }
-                    Spacer(Modifier.width(8.dp))
-                    Text("Simpan")
+                    Spacer(Modifier.weight(1f))
+                    SketchFilledButton(
+                        enabled = pages.isNotEmpty() && !saving && busy.isEmpty(),
+                        onClick = { if (viewModel.isAddingToExisting) viewModel.save(null) else askTitle = true },
+                    ) {
+                        if (saving) {
+                            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Sharp.Check, contentDescription = null)
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.action_save))
+                    }
                 }
             }
         },
     ) { padding ->
         if (pages.isEmpty()) {
             EmptyState(
-                icon = Icons.Outlined.DocumentScanner,
-                title = "Belum ada halaman",
-                message = "Kembali ke kamera untuk memindai halaman.",
+                icon = Icons.Sharp.DocumentScanner,
+                title = stringResource(R.string.empty_review_title),
+                message = stringResource(R.string.empty_review_message),
                 modifier = Modifier.padding(padding).padding(top = 64.dp),
             )
         } else {
@@ -151,8 +175,8 @@ fun ReviewScreen(
 
     if (askTitle) {
         TextInputDialog(
-            title = "Simpan dokumen",
-            label = "Judul dokumen",
+            title = stringResource(R.string.save_document),
+            label = stringResource(R.string.document_title_label),
             initialValue = viewModel.defaultTitle,
             onDismiss = { askTitle = false },
             onConfirm = {
@@ -176,40 +200,48 @@ private fun ReviewPageCard(
     onMove: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier) {
-        Box(Modifier.fillMaxWidth().aspectRatio(0.75f).padding(8.dp)) {
-            AsyncImage(
-                model = File(page.processedPath),
-                contentDescription = "Halaman $number",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(4.dp)),
-            )
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.align(Alignment.TopStart),
-            ) {
-                Text(
-                    "$number",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                )
-            }
-            if (busy) CircularProgressIndicator(Modifier.align(Alignment.Center))
-        }
+    SketchCard(modifier = modifier) {
         Column {
+            Box(Modifier.fillMaxWidth().aspectRatio(0.75f).padding(8.dp)) {
+                AsyncImage(
+                    model = File(page.processedPath),
+                    contentDescription = stringResource(R.string.page_cd, number),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize().clip(RectangleShape),
+                )
+                Surface(
+                    shape = RectangleShape,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .sketchBorder(RectangleShape, SketchInk, SketchStroke),
+                ) {
+                    Text(
+                        "$number",
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                    )
+                }
+                if (busy) CircularProgressIndicator(Modifier.align(Alignment.Center))
+            }
             Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-                IconButton(onClick = onCrop, enabled = !busy) { Icon(Icons.Outlined.Crop, contentDescription = "Potong") }
-                IconButton(onClick = onRotate, enabled = !busy) { Icon(Icons.AutoMirrored.Outlined.RotateRight, contentDescription = "Putar") }
-                IconButton(onClick = onDelete, enabled = !busy) { Icon(Icons.Outlined.Delete, contentDescription = "Hapus") }
+                IconButton(onClick = onCrop, enabled = !busy) {
+                    Icon(Icons.Sharp.Crop, contentDescription = stringResource(R.string.action_crop))
+                }
+                IconButton(onClick = onRotate, enabled = !busy) {
+                    Icon(Icons.AutoMirrored.Sharp.RotateRight, contentDescription = stringResource(R.string.action_rotate))
+                }
+                IconButton(onClick = onDelete, enabled = !busy) {
+                    Icon(Icons.Sharp.Delete, contentDescription = stringResource(R.string.action_delete))
+                }
             }
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 IconButton(onClick = { onMove(-1) }, enabled = !isFirst) {
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Geser ke kiri")
+                    Icon(Icons.AutoMirrored.Sharp.KeyboardArrowLeft, contentDescription = stringResource(R.string.move_forward))
                 }
                 IconButton(onClick = { onMove(1) }, enabled = !isLast) {
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Geser ke kanan")
+                    Icon(Icons.AutoMirrored.Sharp.KeyboardArrowRight, contentDescription = stringResource(R.string.move_backward))
                 }
             }
         }

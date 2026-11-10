@@ -1,12 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Fallback only; the real gradient lives in ic_launcher_foreground (full logo). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <gradient
-        android:type="radial"
-        android:gradientRadius="72%p"
-        android:centerX="0.38"
-        android:centerY="0.32"
-        android:startColor="#FF3CB371"
-        android:centerColor="#FF1FA861"
-        android:endColor="#FF0B7A44" />
+    <solid android:color="@color/ic_launcher_background" />
 </shape>

@@ -12,15 +12,14 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.outlined.AutoFixHigh
-import androidx.compose.material.icons.outlined.CropFree
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.automirrored.sharp.ArrowBack
+import androidx.compose.material.icons.sharp.Check
+import androidx.compose.material.icons.sharp.AutoFixHigh
+import androidx.compose.material.icons.sharp.CropFree
+import androidx.compose.material.icons.sharp.Edit
+import androidx.compose.material.icons.sharp.Visibility
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,19 +28,28 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yondex.archivo.R
 import com.yondex.archivo.domain.model.PageFilter
 import com.yondex.archivo.ui.components.EmptyState
+import com.yondex.archivo.ui.components.SketchChip
+import com.yondex.archivo.ui.components.SketchInk
+import com.yondex.archivo.ui.components.SketchStroke
+import com.yondex.archivo.ui.components.sketchBorder
+import com.yondex.archivo.ui.label
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,18 +62,24 @@ fun CropScreen(
     LaunchedEffect(Unit) { viewModel.done.collect { onBack() } }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Potong & filter") },
+                title = { Text(stringResource(R.string.crop_and_filter)) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali") }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Sharp.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    }
                 },
                 actions = {
                     if (state.isWorking) {
                         CircularProgressIndicator(Modifier.padding(12.dp))
                     } else {
                         IconButton(onClick = viewModel::apply, enabled = state.image != null) {
-                            Icon(Icons.Default.Check, contentDescription = "Terapkan")
+                            Icon(Icons.Sharp.Check, contentDescription = stringResource(R.string.action_apply))
                         }
                     }
                 },
@@ -77,9 +91,9 @@ fun CropScreen(
                 val image = state.image
                 when {
                     state.loadFailed -> EmptyState(
-                        icon = Icons.Outlined.CropFree,
-                        title = "Gambar tidak dapat dibuka",
-                        message = "File halaman mungkin sudah dihapus.",
+                        icon = Icons.Sharp.CropFree,
+                        title = stringResource(R.string.crop_load_error_title),
+                        message = stringResource(R.string.crop_load_error_message),
                     )
                     image == null -> CircularProgressIndicator()
                     state.showPreview -> {
@@ -90,7 +104,7 @@ fun CropScreen(
                             val bitmap = remember(preview) { preview.asImageBitmap() }
                             Image(
                                 bitmap = bitmap,
-                                contentDescription = "Pratinjau",
+                                contentDescription = stringResource(R.string.preview),
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier.fillMaxSize().padding(24.dp),
                             )
@@ -109,23 +123,33 @@ fun CropScreen(
                 }
             }
 
-            Surface(tonalElevation = 3.dp) {
+            Surface(
+                shape = RectangleShape,
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 0.dp,
+                tonalElevation = 0.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .sketchBorder(RectangleShape, SketchInk, SketchStroke),
+            ) {
                 Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(vertical = 8.dp)) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         TextButton(onClick = viewModel::autoDetect) {
-                            Icon(Icons.Outlined.AutoFixHigh, contentDescription = null)
-                            Text(" Deteksi")
+                            Icon(Icons.Sharp.AutoFixHigh, contentDescription = null)
+                            Text(" ${stringResource(R.string.detect)}")
                         }
                         TextButton(onClick = viewModel::selectFull) {
-                            Icon(Icons.Outlined.CropFree, contentDescription = null)
-                            Text(" Seluruh")
+                            Icon(Icons.Sharp.CropFree, contentDescription = null)
+                            Text(" ${stringResource(R.string.full_page)}")
                         }
                         TextButton(onClick = { viewModel.setPreview(!state.showPreview) }) {
-                            Icon(if (state.showPreview) Icons.Outlined.Edit else Icons.Outlined.Visibility, contentDescription = null)
-                            Text(if (state.showPreview) " Sudut" else " Pratinjau")
+                            Icon(if (state.showPreview) Icons.Sharp.Edit else Icons.Sharp.Visibility, contentDescription = null)
+                            Text(
+                                " ${stringResource(if (state.showPreview) R.string.corners else R.string.preview)}",
+                            )
                         }
                     }
                     Row(
@@ -136,10 +160,10 @@ fun CropScreen(
                             .padding(horizontal = 16.dp),
                     ) {
                         PageFilter.entries.forEach { filter ->
-                            FilterChip(
+                            SketchChip(
                                 selected = state.filter == filter,
                                 onClick = { viewModel.setFilter(filter) },
-                                label = { Text(filter.label) },
+                                label = { Text(filter.label()) },
                             )
                         }
                     }
@@ -148,11 +172,3 @@ fun CropScreen(
         }
     }
 }
-
-val PageFilter.label: String
-    get() = when (this) {
-        PageFilter.ORIGINAL -> "Foto asli"
-        PageFilter.ENHANCE -> "Scan warna"
-        PageFilter.GRAYSCALE -> "Abu-abu"
-        PageFilter.BLACK_WHITE -> "Hitam putih"
-    }

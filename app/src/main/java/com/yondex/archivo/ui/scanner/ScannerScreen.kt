@@ -40,15 +40,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FlashOff
-import androidx.compose.material.icons.filled.FlashOn
-import androidx.compose.material.icons.outlined.CameraAlt
-import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material.icons.sharp.Close
+import androidx.compose.material.icons.sharp.FlashOff
+import androidx.compose.material.icons.sharp.FlashOn
+import androidx.compose.material.icons.sharp.CameraAlt
+import androidx.compose.material.icons.sharp.PhotoLibrary
 import androidx.compose.material3.Badge
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,8 +68,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -79,8 +79,10 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yondex.archivo.R
 import com.yondex.archivo.scanner.DocumentCamera
 import com.yondex.archivo.scanner.LiveDetection
+import com.yondex.archivo.ui.components.SketchFilledButton
 import com.yondex.archivo.ui.components.Thumbnail
 import kotlinx.coroutines.launch
 import kotlin.math.min
@@ -196,10 +198,10 @@ private fun CameraContent(
     }
 
     val hint = when {
-        detection?.quad == null -> "Arahkan kamera ke dokumen"
-        autoCapture && stability > 0f -> "Tahan stabil…"
-        autoCapture -> "Dokumen terdeteksi"
-        else -> "Dokumen terdeteksi — tekan tombol"
+        detection?.quad == null -> stringResource(R.string.hint_aim_camera)
+        autoCapture && stability > 0f -> stringResource(R.string.hint_hold_steady)
+        autoCapture -> stringResource(R.string.hint_detected)
+        else -> stringResource(R.string.hint_detected_manual)
     }
 
     Column(Modifier.fillMaxSize()) {
@@ -207,19 +209,21 @@ private fun CameraContent(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 8.dp, vertical = 4.dp),
         ) {
-            IconButton(onClick = onClose) { Icon(Icons.Default.Close, contentDescription = "Tutup", tint = Color.White) }
+            IconButton(onClick = onClose) {
+                Icon(Icons.Sharp.Close, contentDescription = stringResource(R.string.action_close), tint = Color.White)
+            }
             Spacer(Modifier.weight(1f))
             TextButton(onClick = { autoCapture = !autoCapture }) {
                 Text(
-                    if (autoCapture) "AUTO" else "MANUAL",
+                    stringResource(if (autoCapture) R.string.mode_auto else R.string.mode_manual),
                     color = if (autoCapture) MaterialTheme.colorScheme.primary else Color.White,
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
             IconButton(onClick = camera::toggleTorch) {
                 Icon(
-                    if (torchOn) Icons.Default.FlashOn else Icons.Default.FlashOff,
-                    contentDescription = "Flash",
+                    if (torchOn) Icons.Sharp.FlashOn else Icons.Sharp.FlashOff,
+                    contentDescription = stringResource(R.string.flash),
                     tint = Color.White,
                 )
             }
@@ -230,7 +234,7 @@ private fun CameraContent(
             DetectionOverlay(detection, stability, Modifier.fillMaxSize())
             Surface(
                 color = Color.Black.copy(alpha = 0.55f),
-                shape = RoundedCornerShape(50),
+                shape = RectangleShape,
                 modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp),
             ) {
                 Text(
@@ -253,7 +257,11 @@ private fun CameraContent(
                 .padding(horizontal = 32.dp, vertical = 24.dp),
         ) {
             IconButton(onClick = onGallery, modifier = Modifier.size(56.dp)) {
-                Icon(Icons.Outlined.PhotoLibrary, contentDescription = "Impor dari galeri", tint = Color.White)
+                Icon(
+                    Icons.Sharp.PhotoLibrary,
+                    contentDescription = stringResource(R.string.import_gallery),
+                    tint = Color.White,
+                )
             }
 
             ShutterButton(
@@ -267,8 +275,8 @@ private fun CameraContent(
                     Box(
                         modifier = Modifier
                             .size(52.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .border(2.dp, Color.White, RoundedCornerShape(8.dp))
+                            .clip(RectangleShape)
+                            .border(2.dp, Color.White, RectangleShape)
                             .clickable(enabled = pageCount > 0, onClick = onReview),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -373,20 +381,20 @@ private fun PermissionRationale(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize().padding(32.dp),
         ) {
-            Icon(Icons.Outlined.CameraAlt, contentDescription = null, modifier = Modifier.size(64.dp))
+            Icon(Icons.Sharp.CameraAlt, contentDescription = null, modifier = Modifier.size(64.dp))
             Spacer(Modifier.height(16.dp))
-            Text("Izin kamera diperlukan", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.camera_permission_title), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
             Text(
-                "Archivo memerlukan akses kamera untuk memindai dokumen. Anda juga bisa mengimpor gambar dari galeri.",
+                stringResource(R.string.camera_permission_message),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(Modifier.height(24.dp))
-            Button(onClick = onRequest) { Text("Izinkan kamera") }
-            TextButton(onClick = onGallery) { Text("Impor dari galeri") }
-            if (onReview != null) TextButton(onClick = onReview) { Text("Lanjut ke tinjauan") }
-            TextButton(onClick = onClose) { Text("Tutup") }
+            SketchFilledButton(onClick = onRequest) { Text(stringResource(R.string.allow_camera)) }
+            TextButton(onClick = onGallery) { Text(stringResource(R.string.import_gallery)) }
+            if (onReview != null) TextButton(onClick = onReview) { Text(stringResource(R.string.continue_review)) }
+            TextButton(onClick = onClose) { Text(stringResource(R.string.action_close)) }
         }
     }
 }

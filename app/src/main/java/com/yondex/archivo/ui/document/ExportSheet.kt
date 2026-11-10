@@ -1,6 +1,8 @@
 package com.yondex.archivo.ui.document
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,16 +13,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Download
-import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.sharp.Download
+import androidx.compose.material.icons.sharp.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,9 +27,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.yondex.archivo.R
 import com.yondex.archivo.domain.model.ExportQuality
 import com.yondex.archivo.domain.model.PdfPageSize
+import com.yondex.archivo.ui.components.SketchChip
+import com.yondex.archivo.ui.components.SketchFilledButton
+import com.yondex.archivo.ui.components.SketchInk
+import com.yondex.archivo.ui.components.SketchOutlinedButton
+import com.yondex.archivo.ui.label
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,27 +53,40 @@ fun ExportSheet(
     val isImage = options.format == ExportFormat.JPG || options.format == ExportFormat.PNG
     val canSave = !isImage || canSaveImages
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        shape = RectangleShape,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        tonalElevation = 0.dp,
+        dragHandle = {
+            Box(
+                Modifier
+                    .padding(vertical = 12.dp)
+                    .size(width = 40.dp, height = 4.dp)
+                    .background(SketchInk, RectangleShape),
+            )
+        },
+    ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 8.dp),
         ) {
-            Text("Export dokumen", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.export_document), style = MaterialTheme.typography.titleLarge)
 
-            OptionGroup("Format", ExportFormat.entries, options.format, { it.label }) {
+            OptionGroup(stringResource(R.string.format), ExportFormat.entries, options.format, { it.label() }) {
                 options = options.copy(format = it)
             }
             if (options.format == ExportFormat.PDF) {
-                OptionGroup("Ukuran halaman", PdfPageSize.entries, options.pageSize, { it.label }) {
+                OptionGroup(stringResource(R.string.page_size), PdfPageSize.entries, options.pageSize, { it.label() }) {
                     options = options.copy(pageSize = it)
                 }
-                OptionGroup("Kualitas", ExportQuality.entries, options.quality, { it.label }) {
+                OptionGroup(stringResource(R.string.quality), ExportQuality.entries, options.quality, { it.label() }) {
                     options = options.copy(quality = it)
                 }
             }
             if (options.format == ExportFormat.TXT) {
                 Text(
-                    "Berisi teks hasil OCR dari semua halaman.",
+                    stringResource(R.string.export_txt_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -74,16 +94,16 @@ fun ExportSheet(
 
             Spacer(Modifier.height(4.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedButton(
+                SketchOutlinedButton(
                     enabled = !exporting && canSave,
                     onClick = { onSave(options) },
                     modifier = Modifier.weight(1f),
                 ) {
-                    Icon(Icons.Outlined.Download, contentDescription = null)
+                    Icon(Icons.Sharp.Download, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(if (isImage) "Ke Galeri" else "Simpan")
+                    Text(stringResource(if (isImage) R.string.to_gallery else R.string.action_save))
                 }
-                Button(
+                SketchFilledButton(
                     enabled = !exporting,
                     onClick = { onShare(options) },
                     modifier = Modifier.weight(1f),
@@ -91,10 +111,10 @@ fun ExportSheet(
                     if (exporting) {
                         CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                     } else {
-                        Icon(Icons.Outlined.Share, contentDescription = null)
+                        Icon(Icons.Sharp.Share, contentDescription = null)
                     }
                     Spacer(Modifier.width(8.dp))
-                    Text("Bagikan")
+                    Text(stringResource(R.string.action_share))
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -103,33 +123,27 @@ fun ExportSheet(
 }
 
 @Composable
+fun ExportFormat.label(): String = when (this) {
+    ExportFormat.PDF -> "PDF"
+    ExportFormat.JPG -> "JPG"
+    ExportFormat.PNG -> "PNG"
+    ExportFormat.TXT -> stringResource(R.string.format_text)
+}
+
+@Composable
 private fun <T> OptionGroup(
     title: String,
     values: List<T>,
     selected: T,
-    label: (T) -> String,
+    label: @Composable (T) -> String,
     onSelect: (T) -> Unit,
 ) {
     Column {
         Text(title, style = MaterialTheme.typography.labelLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             values.forEach { value ->
-                FilterChip(selected = value == selected, onClick = { onSelect(value) }, label = { Text(label(value)) })
+                SketchChip(selected = value == selected, onClick = { onSelect(value) }, label = { Text(label(value)) })
             }
         }
     }
 }
-
-val PdfPageSize.label: String
-    get() = when (this) {
-        PdfPageSize.A4 -> "A4"
-        PdfPageSize.LETTER -> "Letter"
-        PdfPageSize.FIT_IMAGE -> "Ikuti gambar"
-    }
-
-val ExportQuality.label: String
-    get() = when (this) {
-        ExportQuality.LOW -> "Rendah"
-        ExportQuality.MEDIUM -> "Sedang"
-        ExportQuality.HIGH -> "Tinggi"
-    }

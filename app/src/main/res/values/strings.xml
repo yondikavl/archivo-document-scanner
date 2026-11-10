@@ -1,3 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Archivo</string>
+
+    <!-- Common -->
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_create">Create</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_move">Move</string>
+    <string name="action_share">Share</string>
+    <string name="action_export">Export</string>
+    <string name="action_more">More</string>
+    <string name="action_close">Close</string>
+    <string name="action_search">Search</string>
+    <string name="action_sort">Sort</string>
+    <string name="action_scan">Scan</string>
+    <string name="action_tag">Tag</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_select_all">Select all</string>
+    <string name="cd_selected">Selected</string>
+    <string name="home_label">Home</string>
+    <string name="folder">Folder</string>
+    <string name="documents">Documents</string>
+    <string name="pages_short">%d pg</string>
+    <string name="pages_count">%d pages</string>
+    <string name="pages_meta">%1$d pages • %2$s</string>
+    <string name="documents_count">%d documents</string>
+    <string name="documents_folders_count">%1$d documents · %2$d folders</string>
+
+    <!-- Home -->
+    <string name="your_archive">Your archive</string>
+    <string name="search_hint">Search titles or document text</string>
+    <string name="search_documents_hint">Search your documents…</string>
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="greeting_subtitle">Your documents, ready to go</string>
+    <string name="import_file">Import file</string>
+    <string name="filter_all">All</string>
+    <string name="filter_scans">Scans</string>
+    <string name="filter_pdf">PDF</string>
+    <string name="recently_added">Recently added</string>
+    <string name="section_files">Files</string>
+    <string name="section_all_documents">All documents</string>
+    <string name="view_more">View more</string>
+    <string name="empty_home_title">Nothing here yet</string>
+    <string name="empty_home_message">Scan a page or import a PDF to get started.</string>
+    <string name="reader_open_failed">Could not open this file.</string>
+    <string name="delete_library_file_title">Delete file?</string>
+    <string name="delete_library_file_message">\"%1$s\" will be removed from Archivo.</string>
+    <string name="section_folders">Folders</string>
+    <string name="section_documents">Documents</string>
+    <string name="section_documents_tagged">Documents with selected tags</string>
+    <string name="empty_no_documents">No documents yet</string>
+    <string name="empty_no_documents_filter">No documents</string>
+    <string name="empty_no_documents_message">Tap the scan button to scan your first document.</string>
+    <string name="empty_no_documents_filter_message">No documents match all selected tags.</string>
+    <string name="new_folder">New folder</string>
+    <string name="folder_name">Folder name</string>
+    <string name="rename_folder">Rename folder</string>
+    <string name="delete_folder">Delete folder</string>
+    <string name="delete_folder_title">Delete folder?</string>
+    <string name="delete_folder_message">Folder \"%1$s\" and its subfolders will be deleted. Documents inside move to Home.</string>
+    <string name="delete_documents_title">Delete %d documents?</string>
+    <string name="delete_documents_message">Documents and all their pages will be permanently deleted.</string>
+    <string name="manage_tags">Manage tags</string>
+    <string name="change_view">Change view</string>
+    <string name="selected_count">%d selected</string>
+    <string name="sort_updated">Last modified</string>
+    <string name="sort_created">Date created</string>
+    <string name="sort_name">Name (A–Z)</string>
+    <string name="sort_pages">Page count</string>
+
+    <!-- Search -->
+    <string name="all_folders">All folders</string>
+    <string name="search_not_found">Not found</string>
+    <string name="search_not_found_message">No documents match \"%1$s\".</string>
+
+    <!-- Scanner -->
+    <string name="hint_aim_camera">Point the camera at a document</string>
+    <string name="hint_hold_steady">Hold steady…</string>
+    <string name="hint_detected">Document detected</string>
+    <string name="hint_detected_manual">Document detected — tap the shutter</string>
+    <string name="mode_auto">AUTO</string>
+    <string name="mode_manual">MANUAL</string>
+    <string name="flash">Flash</string>
+    <string name="import_gallery">Import from gallery</string>
+    <string name="camera_permission_title">Camera permission required</string>
+    <string name="camera_permission_message">Archivo needs camera access to scan documents. You can still import photos from the gallery.</string>
+    <string name="allow_camera">Allow camera</string>
+    <string name="continue_review">Continue to review</string>
+    <string name="error_capture">Failed to take photo</string>
+    <string name="error_import">Failed to import image</string>
+    <string name="error_process">Failed to process image</string>
+
+    <!-- Review -->
+    <string name="review_title">Review %d pages</string>
+    <string name="action_add">Add</string>
+    <string name="empty_review_title">No pages yet</string>
+    <string name="empty_review_message">Go back to the camera to scan pages.</string>
+    <string name="save_document">Save document</string>
+    <string name="document_title_label">Document title</string>
+    <string name="error_rotate">Failed to rotate page</string>
+    <string name="error_save_document">Failed to save document</string>
+
+    <!-- Crop -->
+    <string name="crop_and_filter">Crop &amp; filter</string>
+    <string name="action_apply">Apply</string>
+    <string name="crop_load_error_title">Image could not be opened</string>
+    <string name="crop_load_error_message">The page file may have been deleted.</string>
+    <string name="preview">Preview</string>
+    <string name="detect">Detect</string>
+    <string name="full_page">Full page</string>
+    <string name="corners">Corners</string>
+    <string name="filter_original">Original photo</string>
+    <string name="filter_enhance">Color scan</string>
+    <string name="filter_grayscale">Grayscale</string>
+    <string name="filter_bw">Black &amp; white</string>
+
+    <!-- Document -->
+    <string name="add_pages">Add pages</string>
+    <string name="document_meta">%1$d pages • %2$s • %3$s</string>
+    <string name="ocr_running_pages">OCR is running for %d pages…</string>
+    <string name="empty_document_title">Empty document</string>
+    <string name="empty_document_message">Add pages by scanning a document.</string>
+    <string name="rename_document">Rename</string>
+    <string name="rerun_ocr">Run OCR again</string>
+    <string name="delete_document_title">Delete document?</string>
+    <string name="delete_document_message">\"%1$s\" and all its pages will be permanently deleted.</string>
+    <string name="page_cd">Page %d</string>
+    <string name="move_forward">Move forward</string>
+    <string name="move_backward">Move backward</string>
+    <string name="delete_page">Delete page</string>
+    <string name="ocr_running">OCR running</string>
+    <string name="ocr_ready">Text available</string>
+    <string name="ocr_failed">OCR failed</string>
+    <string name="no_share_app">No app available to share</string>
+    <string name="ocr_started">OCR started in the background</string>
+    <string name="file_saved">File saved</string>
+    <string name="images_saved_gallery">%d images saved to Gallery › Pictures/Archivo</string>
+    <string name="export_failed">Export failed: %1$s</string>
+    <string name="export_document">Export document</string>
+    <string name="format">Format</string>
+    <string name="page_size">Page size</string>
+    <string name="quality">Quality</string>
+    <string name="export_txt_hint">Includes OCR text from all pages.</string>
+    <string name="to_gallery">To Gallery</string>
+    <string name="format_text">Text</string>
+    <string name="page_size_fit">Fit to image</string>
+    <string name="quality_low">Low</string>
+    <string name="quality_medium">Medium</string>
+    <string name="quality_high">High</string>
+
+    <!-- Page viewer -->
+    <string name="action_text">Text</string>
+    <string name="action_crop">Crop</string>
+    <string name="action_rotate">Rotate</string>
+    <string name="text_copied">Text copied</string>
+    <string name="delete_page_title">Delete page?</string>
+    <string name="delete_page_message">Page %d will be permanently deleted.</string>
+    <string name="page_text">Page text</string>
+    <string name="recognizing_text">Recognizing text…</string>
+    <string name="no_ocr_text">No text yet. Run OCR to extract text from this page.</string>
+    <string name="run_ocr">Run OCR</string>
+
+    <!-- Tags -->
+    <string name="empty_tags_title">No tags yet</string>
+    <string name="empty_tags_message">Tags help group documents across folders.</string>
+    <string name="new_tag">New tag</string>
+    <string name="edit_tag">Edit tag</string>
+    <string name="delete_tag_title">Delete tag?</string>
+    <string name="delete_tag_message">Tag \"%1$s\" will be removed from all documents.</string>
+    <string name="tag_name">Tag name</string>
+    <string name="tag_partial">%1$s (partial)</string>
+    <string name="no_tags_yet">No tags yet.</string>
+    <string name="add_tag">Add tag</string>
+
+    <!-- Dialogs -->
+    <string name="move_to">Move to</string>
+    <string name="home_no_folder">Home (no folder)</string>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="section_appearance">Appearance</string>
+    <string name="section_scan">Scan</string>
+    <string name="section_export_pdf">PDF export</string>
+    <string name="section_about">About</string>
+    <string name="language">Language</string>
+    <string name="theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="language_system">System</string>
+    <string name="language_english">English</string>
+    <string name="language_indonesian">Indonesian</string>
+    <string name="dynamic_color">Dynamic color</string>
+    <string name="dynamic_color_summary">Follow wallpaper colors (turn off to keep Archivo green)</string>
+    <string name="default_filter">Default filter</string>
+    <string name="auto_ocr">Automatic OCR</string>
+    <string name="auto_ocr_summary">Extract text from each page after saving</string>
+    <string name="app_version">Version %1$s</string>
 </resources>

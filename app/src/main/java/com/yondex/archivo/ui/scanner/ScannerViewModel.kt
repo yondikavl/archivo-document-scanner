@@ -15,6 +15,7 @@ import com.yondex.archivo.scanner.BitmapIO
 import com.yondex.archivo.scanner.EdgeDetector
 import com.yondex.archivo.scanner.ImageProcessor
 import com.yondex.archivo.scanner.ScanPage
+import com.yondex.archivo.R
 import com.yondex.archivo.scanner.ScanSession
 import com.yondex.archivo.ui.navigation.ScannerRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -61,7 +62,7 @@ class ScannerViewModel @Inject constructor(
 
     fun onCaptureFailed(error: Throwable) {
         Log.w(TAG, "Capture failed", error)
-        _messages.tryEmit("Gagal mengambil foto")
+        _messages.tryEmit(context.getString(R.string.error_capture))
     }
 
     fun importImages(uris: List<Uri>) {
@@ -72,7 +73,7 @@ class ScannerViewModel @Inject constructor(
                     .onSuccess { addPage(it, null) }
                     .onFailure {
                         Log.w(TAG, "Import failed for $uri", it)
-                        _messages.tryEmit("Gagal mengimpor gambar")
+                        _messages.tryEmit(context.getString(R.string.error_import))
                     }
             }
         }
@@ -106,7 +107,7 @@ class ScannerViewModel @Inject constructor(
                 block()
             } catch (e: Exception) {
                 Log.e(TAG, "Processing failed", e)
-                _messages.tryEmit("Gagal memproses gambar")
+                _messages.tryEmit(context.getString(R.string.error_process))
             } finally {
                 _processingCount.update { it - 1 }
             }

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Archivo</string>
+
+    <!-- Common -->
+    <string name="action_back">Kembali</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_delete">Hapus</string>
+    <string name="action_create">Buat</string>
+    <string name="action_rename">Ganti nama</string>
+    <string name="action_move">Pindahkan</string>
+    <string name="action_share">Bagikan</string>
+    <string name="action_export">Export</string>
+    <string name="action_more">Lainnya</string>
+    <string name="action_close">Tutup</string>
+    <string name="action_search">Cari</string>
+    <string name="action_sort">Urutkan</string>
+    <string name="action_scan">Scan</string>
+    <string name="action_tag">Tag</string>
+    <string name="action_settings">Pengaturan</string>
+    <string name="action_select_all">Pilih semua</string>
+    <string name="cd_selected">Dipilih</string>
+    <string name="home_label">Beranda</string>
+    <string name="folder">Folder</string>
+    <string name="documents">Dokumen</string>
+    <string name="pages_short">%d hal</string>
+    <string name="pages_count">%d halaman</string>
+    <string name="pages_meta">%1$d halaman • %2$s</string>
+    <string name="documents_count">%d dokumen</string>
+    <string name="documents_folders_count">%1$d dokumen · %2$d folder</string>
+
+    <!-- Home -->
+    <string name="your_archive">Arsip Anda</string>
+    <string name="search_hint">Cari judul atau isi dokumen</string>
+    <string name="search_documents_hint">Cari dokumen Anda…</string>
+    <string name="greeting_morning">Selamat pagi</string>
+    <string name="greeting_afternoon">Selamat siang</string>
+    <string name="greeting_evening">Selamat malam</string>
+    <string name="greeting_subtitle">Dokumen Anda, siap digunakan</string>
+    <string name="import_file">Impor file</string>
+    <string name="filter_all">Semua</string>
+    <string name="filter_scans">Scan</string>
+    <string name="filter_pdf">PDF</string>
+    <string name="recently_added">Baru ditambahkan</string>
+    <string name="section_files">File</string>
+    <string name="section_all_documents">Semua dokumen</string>
+    <string name="view_more">Lihat semua</string>
+    <string name="empty_home_title">Belum ada apa-apa</string>
+    <string name="empty_home_message">Scan halaman atau impor file PDF untuk mulai.</string>
+    <string name="reader_open_failed">File tidak dapat dibuka.</string>
+    <string name="delete_library_file_title">Hapus file?</string>
+    <string name="delete_library_file_message">\"%1$s\" akan dihapus dari Archivo.</string>
+    <string name="section_folders">Folder</string>
+    <string name="section_documents">Dokumen</string>
+    <string name="section_documents_tagged">Dokumen dengan tag terpilih</string>
+    <string name="empty_no_documents">Belum ada dokumen</string>
+    <string name="empty_no_documents_filter">Tidak ada dokumen</string>
+    <string name="empty_no_documents_message">Tekan tombol scan untuk memindai dokumen pertama Anda.</string>
+    <string name="empty_no_documents_filter_message">Tidak ada dokumen dengan semua tag terpilih.</string>
+    <string name="new_folder">Folder baru</string>
+    <string name="folder_name">Nama folder</string>
+    <string name="rename_folder">Ganti nama folder</string>
+    <string name="delete_folder">Hapus folder</string>
+    <string name="delete_folder_title">Hapus folder?</string>
+    <string name="delete_folder_message">Folder \"%1$s\" beserta subfoldernya akan dihapus. Dokumen di dalamnya dipindahkan ke Beranda.</string>
+    <string name="delete_documents_title">Hapus %d dokumen?</string>
+    <string name="delete_documents_message">Dokumen dan semua halamannya akan dihapus permanen.</string>
+    <string name="manage_tags">Kelola tag</string>
+    <string name="change_view">Ubah tampilan</string>
+    <string name="selected_count">%d dipilih</string>
+    <string name="sort_updated">Terakhir diubah</string>
+    <string name="sort_created">Tanggal dibuat</string>
+    <string name="sort_name">Nama (A–Z)</string>
+    <string name="sort_pages">Jumlah halaman</string>
+
+    <!-- Search -->
+    <string name="all_folders">Semua folder</string>
+    <string name="search_not_found">Tidak ditemukan</string>
+    <string name="search_not_found_message">Tidak ada dokumen yang cocok dengan \"%1$s\".</string>
+
+    <!-- Scanner -->
+    <string name="hint_aim_camera">Arahkan kamera ke dokumen</string>
+    <string name="hint_hold_steady">Tahan stabil…</string>
+    <string name="hint_detected">Dokumen terdeteksi</string>
+    <string name="hint_detected_manual">Dokumen terdeteksi — tekan tombol</string>
+    <string name="mode_auto">AUTO</string>
+    <string name="mode_manual">MANUAL</string>
+    <string name="flash">Flash</string>
+    <string name="import_gallery">Impor dari galeri</string>
+    <string name="camera_permission_title">Izin kamera diperlukan</string>
+    <string name="camera_permission_message">Archivo membutuhkan akses kamera untuk memindai dokumen. Anda tetap bisa mengimpor foto dari galeri.</string>
+    <string name="allow_camera">Izinkan kamera</string>
+    <string name="continue_review">Lanjut ke tinjauan</string>
+    <string name="error_capture">Gagal mengambil foto</string>
+    <string name="error_import">Gagal mengimpor gambar</string>
+    <string name="error_process">Gagal memproses gambar</string>
+
+    <!-- Review -->
+    <string name="review_title">Tinjau %d halaman</string>
+    <string name="action_add">Tambah</string>
+    <string name="empty_review_title">Belum ada halaman</string>
+    <string name="empty_review_message">Kembali ke kamera untuk memindai halaman.</string>
+    <string name="save_document">Simpan dokumen</string>
+    <string name="document_title_label">Judul dokumen</string>
+    <string name="error_rotate">Gagal memutar halaman</string>
+    <string name="error_save_document">Gagal menyimpan dokumen</string>
+
+    <!-- Crop -->
+    <string name="crop_and_filter">Potong &amp; filter</string>
+    <string name="action_apply">Terapkan</string>
+    <string name="crop_load_error_title">Gambar tidak dapat dibuka</string>
+    <string name="crop_load_error_message">File halaman mungkin sudah dihapus.</string>
+    <string name="preview">Pratinjau</string>
+    <string name="detect">Deteksi</string>
+    <string name="full_page">Seluruh</string>
+    <string name="corners">Sudut</string>
+    <string name="filter_original">Foto asli</string>
+    <string name="filter_enhance">Scan warna</string>
+    <string name="filter_grayscale">Abu-abu</string>
+    <string name="filter_bw">Hitam putih</string>
+
+    <!-- Document -->
+    <string name="add_pages">Tambah halaman</string>
+    <string name="document_meta">%1$d halaman • %2$s • %3$s</string>
+    <string name="ocr_running_pages">OCR sedang berjalan untuk %d halaman…</string>
+    <string name="empty_document_title">Dokumen kosong</string>
+    <string name="empty_document_message">Tambahkan halaman dengan memindai dokumen.</string>
+    <string name="rename_document">Ganti nama</string>
+    <string name="rerun_ocr">Jalankan OCR ulang</string>
+    <string name="delete_document_title">Hapus dokumen?</string>
+    <string name="delete_document_message">\"%1$s\" dan semua halamannya akan dihapus permanen.</string>
+    <string name="page_cd">Halaman %d</string>
+    <string name="move_forward">Geser ke depan</string>
+    <string name="move_backward">Geser ke belakang</string>
+    <string name="delete_page">Hapus halaman</string>
+    <string name="ocr_running">OCR berjalan</string>
+    <string name="ocr_ready">Teks tersedia</string>
+    <string name="ocr_failed">OCR gagal</string>
+    <string name="no_share_app">Tidak ada aplikasi untuk membagikan</string>
+    <string name="ocr_started">OCR dijalankan di latar belakang</string>
+    <string name="file_saved">File tersimpan</string>
+    <string name="images_saved_gallery">%d gambar disimpan ke Galeri › Pictures/Archivo</string>
+    <string name="export_failed">Export gagal: %1$s</string>
+    <string name="export_document">Export dokumen</string>
+    <string name="format">Format</string>
+    <string name="page_size">Ukuran halaman</string>
+    <string name="quality">Kualitas</string>
+    <string name="export_txt_hint">Berisi teks hasil OCR dari semua halaman.</string>
+    <string name="to_gallery">Ke Galeri</string>
+    <string name="format_text">Teks</string>
+    <string name="page_size_fit">Ikuti gambar</string>
+    <string name="quality_low">Rendah</string>
+    <string name="quality_medium">Sedang</string>
+    <string name="quality_high">Tinggi</string>
+
+    <!-- Page viewer -->
+    <string name="action_text">Teks</string>
+    <string name="action_crop">Potong</string>
+    <string name="action_rotate">Putar</string>
+    <string name="text_copied">Teks disalin</string>
+    <string name="delete_page_title">Hapus halaman?</string>
+    <string name="delete_page_message">Halaman %d akan dihapus permanen.</string>
+    <string name="page_text">Teks halaman</string>
+    <string name="recognizing_text">Sedang mengenali teks…</string>
+    <string name="no_ocr_text">Belum ada teks. Jalankan OCR untuk mengekstrak teks dari halaman ini.</string>
+    <string name="run_ocr">Jalankan OCR</string>
+
+    <!-- Tags -->
+    <string name="empty_tags_title">Belum ada tag</string>
+    <string name="empty_tags_message">Tag membantu mengelompokkan dokumen lintas folder.</string>
+    <string name="new_tag">Tag baru</string>
+    <string name="edit_tag">Edit tag</string>
+    <string name="delete_tag_title">Hapus tag?</string>
+    <string name="delete_tag_message">Tag \"%1$s\" akan dilepas dari semua dokumen.</string>
+    <string name="tag_name">Nama tag</string>
+    <string name="tag_partial">%1$s (sebagian)</string>
+    <string name="no_tags_yet">Belum ada tag.</string>
+    <string name="add_tag">Tambah tag</string>
+
+    <!-- Dialogs -->
+    <string name="move_to">Pindahkan ke</string>
+    <string name="home_no_folder">Beranda (tanpa folder)</string>
+
+    <!-- Settings -->
+    <string name="settings">Pengaturan</string>
+    <string name="section_appearance">Tampilan</string>
+    <string name="section_scan">Scan</string>
+    <string name="section_export_pdf">Export PDF</string>
+    <string name="section_about">Tentang</string>
+    <string name="language">Bahasa</string>
+    <string name="theme">Tema</string>
+    <string name="theme_system">Ikuti sistem</string>
+    <string name="theme_light">Terang</string>
+    <string name="theme_dark">Gelap</string>
+    <string name="language_system">Ikuti sistem</string>
+    <string name="language_english">English</string>
+    <string name="language_indonesian">Indonesia</string>
+    <string name="dynamic_color">Warna dinamis</string>
+    <string name="dynamic_color_summary">Ikuti warna wallpaper (nonaktifkan untuk tetap pakai hijau Archivo)</string>
+    <string name="default_filter">Filter bawaan</string>
+    <string name="auto_ocr">OCR otomatis</string>
+    <string name="auto_ocr_summary">Ekstrak teks setiap halaman setelah disimpan</string>
+    <string name="app_version">Versi %1$s</string>
+</resources>

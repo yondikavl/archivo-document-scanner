@@ -11,15 +11,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.SearchOff
-import androidx.compose.material3.DropdownMenu
+import androidx.compose.material.icons.automirrored.sharp.ArrowBack
+import androidx.compose.material.icons.sharp.ArrowDropDown
+import androidx.compose.material.icons.sharp.Close
+import androidx.compose.material.icons.sharp.Folder
+import androidx.compose.material.icons.sharp.SearchOff
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -48,10 +47,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yondex.archivo.R
 import com.yondex.archivo.data.repository.DocumentRepository
 import com.yondex.archivo.data.repository.asTree
 import com.yondex.archivo.ui.components.DocumentListItem
 import com.yondex.archivo.ui.components.EmptyState
+import com.yondex.archivo.ui.components.SketchChip
+import com.yondex.archivo.ui.components.SketchDropdownMenu
 import com.yondex.archivo.ui.components.TagDot
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,22 +76,28 @@ fun SearchScreen(
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
+                colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali") }
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Sharp.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                    }
                 },
                 title = {
                     TextField(
                         value = query,
                         onValueChange = viewModel::setQuery,
-                        placeholder = { Text("Cari judul atau isi dokumen") },
+                        placeholder = { Text(stringResource(R.string.search_hint)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         trailingIcon = {
                             if (query.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.setQuery("") }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Hapus")
+                                    Icon(Icons.Sharp.Close, contentDescription = stringResource(R.string.action_delete))
                                 }
                             }
                         },
@@ -107,23 +115,30 @@ fun SearchScreen(
     ) { padding ->
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxSize().padding(padding),
         ) {
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     item {
                         Box {
-                            FilterChip(
+                            SketchChip(
                                 selected = folderFilter != null,
                                 onClick = { folderMenu = true },
-                                label = { Text(folders.firstOrNull { it.id == folderFilter }?.name ?: "Semua folder") },
-                                leadingIcon = { Icon(Icons.Outlined.Folder, contentDescription = null) },
-                                trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
+                                label = {
+                                    Text(
+                                        folders.firstOrNull { it.id == folderFilter }?.name
+                                            ?: stringResource(R.string.all_folders),
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Sharp.Folder, contentDescription = null)
+                                },
+                                trailingIcon = { Icon(Icons.Sharp.ArrowDropDown, contentDescription = null) },
                             )
-                            DropdownMenu(expanded = folderMenu, onDismissRequest = { folderMenu = false }) {
+                            SketchDropdownMenu(expanded = folderMenu, onDismissRequest = { folderMenu = false }) {
                                 DropdownMenuItem(
-                                    text = { Text("Semua folder") },
+                                    text = { Text(stringResource(R.string.all_folders)) },
                                     onClick = { viewModel.setFolderFilter(null); folderMenu = false },
                                 )
                                 folders.asTree().forEach { (folder, depth) ->
@@ -136,7 +151,7 @@ fun SearchScreen(
                         }
                     }
                     items(tags, key = { it.id }) { tag ->
-                        FilterChip(
+                        SketchChip(
                             selected = tag.id in tagFilter,
                             onClick = { viewModel.toggleTag(tag.id) },
                             label = { Text(tag.name) },
@@ -149,9 +164,9 @@ fun SearchScreen(
             if (state.hasQuery && state.results.isEmpty()) {
                 item {
                     EmptyState(
-                        icon = Icons.Outlined.SearchOff,
-                        title = "Tidak ditemukan",
-                        message = "Tidak ada dokumen yang cocok dengan \"$query\".",
+                        icon = Icons.Sharp.SearchOff,
+                        title = stringResource(R.string.search_not_found),
+                        message = stringResource(R.string.search_not_found_message, query),
                         modifier = Modifier.padding(top = 48.dp),
                     )
                 }

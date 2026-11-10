@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,9 +12,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -21,46 +24,58 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.Crop
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.automirrored.outlined.RotateRight
-import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material.icons.automirrored.outlined.TextSnippet
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.automirrored.sharp.ArrowBack
+import androidx.compose.material.icons.sharp.ContentCopy
+import androidx.compose.material.icons.sharp.Crop
+import androidx.compose.material.icons.sharp.Delete
+import androidx.compose.material.icons.sharp.Edit
+import androidx.compose.material.icons.automirrored.sharp.RotateRight
+import androidx.compose.material.icons.sharp.Share
+import androidx.compose.material.icons.automirrored.sharp.TextSnippet
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yondex.archivo.R
 import com.yondex.archivo.domain.model.OcrStatus
 import com.yondex.archivo.domain.model.Page
 import com.yondex.archivo.ui.components.ConfirmDialog
+import com.yondex.archivo.ui.components.SketchFilledButton
+import com.yondex.archivo.ui.components.SketchInk
+import com.yondex.archivo.ui.components.SketchStroke
+import com.yondex.archivo.ui.components.sketchBorder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,77 +90,117 @@ fun PageViewerScreen(
     val busy by viewModel.busyPages.collectAsStateWithLifecycle()
     var showText by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var pageZoomed by remember { mutableStateOf(false) }
+    val textCopied = stringResource(R.string.text_copied)
 
     LaunchedEffect(Unit) { viewModel.shareEvents.collect { context.startActivity(it) } }
 
     val list = pages
     if (list == null) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
         return
     }
-    LaunchedEffect(list.isEmpty()) { if (list.isEmpty()) onBack() }
+
+    LaunchedEffect(list.isEmpty()) {
+        if (list.isEmpty()) onBack()
+    }
     if (list.isEmpty()) return
 
-    val pagerState = rememberPagerState(initialPage = viewModel.initialIndex.coerceIn(0, list.lastIndex)) { list.size }
-    val current = list.getOrNull(pagerState.currentPage) ?: list.last()
+    val pagerState = rememberPagerState(
+        initialPage = viewModel.initialIndex.coerceIn(0, list.lastIndex),
+    ) { list.size }
+
+    LaunchedEffect(list.size, list.lastOrNull()?.id) {
+        if (pagerState.currentPage > list.lastIndex) {
+            pagerState.scrollToPage(list.lastIndex)
+        }
+    }
+    LaunchedEffect(pagerState.currentPage) {
+        pageZoomed = false
+    }
+
+    val current by remember(list) {
+        derivedStateOf { list.getOrNull(pagerState.currentPage) ?: list.last() }
+    }
+    val currentPage = rememberUpdatedState(current)
+    val pageBusy = current.id in busy
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
                 title = {
                     Column {
-                        Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleMedium)
                         Text(
-                            "Halaman ${pagerState.currentPage + 1} dari ${list.size}",
+                            title,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            "${pagerState.currentPage + 1} / ${list.size}",
                             style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali") }
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Sharp.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
+                    }
                 },
             )
         },
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { showText = true },
-                    icon = { Icon(Icons.AutoMirrored.Outlined.TextSnippet, contentDescription = null) },
-                    label = { Text("Teks") },
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { onCrop(current.id) },
-                    icon = { Icon(Icons.Outlined.Crop, contentDescription = null) },
-                    label = { Text("Potong") },
-                )
-                NavigationBarItem(
-                    selected = false,
-                    enabled = current.id !in busy,
-                    onClick = { viewModel.rotate(current) },
-                    icon = { Icon(Icons.AutoMirrored.Outlined.RotateRight, contentDescription = null) },
-                    label = { Text("Putar") },
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { confirmDelete = true },
-                    icon = { Icon(Icons.Outlined.Delete, contentDescription = null) },
-                    label = { Text("Hapus") },
-                )
-            }
+            PageActionBar(
+                busy = pageBusy,
+                onText = { showText = true },
+                onCrop = { onCrop(currentPage.value.id) },
+                onRotate = { viewModel.rotate(currentPage.value) },
+                onDelete = { confirmDelete = true },
+            )
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            HorizontalPager(state = pagerState, key = { list[it].id }, modifier = Modifier.fillMaxSize()) { index ->
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+        ) {
+            HorizontalPager(
+                state = pagerState,
+                key = { list[it].id },
+                beyondViewportPageCount = 1,
+                userScrollEnabled = !pageZoomed,
+                modifier = Modifier.fillMaxSize(),
+            ) { index ->
                 val page = list[index]
+                val isCurrent = index == pagerState.currentPage
                 ZoomableImage(
                     path = page.processedPath,
-                    contentDescription = "Halaman ${index + 1}",
+                    contentDescription = stringResource(R.string.page_cd, index + 1),
                     modifier = Modifier.fillMaxSize(),
+                    onZoomChanged = { zoomed ->
+                        if (isCurrent) pageZoomed = zoomed
+                    },
                 )
             }
-            if (current.id in busy) LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+            if (pageBusy) {
+                LinearProgressIndicator(
+                    Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter),
+                )
+            }
         }
     }
 
@@ -155,7 +210,7 @@ fun PageViewerScreen(
             onDismiss = { showText = false },
             onCopy = { text ->
                 copyToClipboard(context, text)
-                Toast.makeText(context, "Teks disalin", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, textCopied, Toast.LENGTH_SHORT).show()
             },
             onShare = viewModel::shareText,
             onSave = { viewModel.saveText(current, it) },
@@ -164,12 +219,86 @@ fun PageViewerScreen(
     }
     if (confirmDelete) {
         ConfirmDialog(
-            title = "Hapus halaman?",
-            message = "Halaman ${pagerState.currentPage + 1} akan dihapus permanen.",
+            title = stringResource(R.string.delete_page_title),
+            message = stringResource(R.string.delete_page_message, pagerState.currentPage + 1),
             onDismiss = { confirmDelete = false },
             onConfirm = {
                 viewModel.delete(current)
                 confirmDelete = false
+            },
+        )
+    }
+}
+
+@Composable
+private fun PageActionBar(
+    busy: Boolean,
+    onText: () -> Unit,
+    onCrop: () -> Unit,
+    onRotate: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Surface(
+        shape = RectangleShape,
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        modifier = Modifier.sketchBorder(RectangleShape, SketchInk, SketchStroke),
+    ) {
+        Column {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .height(72.dp)
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PageAction(
+                    icon = Icons.AutoMirrored.Sharp.TextSnippet,
+                    label = stringResource(R.string.action_text),
+                    onClick = onText,
+                )
+                PageAction(
+                    icon = Icons.Sharp.Crop,
+                    label = stringResource(R.string.action_crop),
+                    onClick = onCrop,
+                )
+                PageAction(
+                    icon = Icons.AutoMirrored.Sharp.RotateRight,
+                    label = stringResource(R.string.action_rotate),
+                    enabled = !busy,
+                    onClick = onRotate,
+                )
+                PageAction(
+                    icon = Icons.Sharp.Delete,
+                    label = stringResource(R.string.action_delete),
+                    onClick = onDelete,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PageAction(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(44.dp)) {
+            Icon(icon, contentDescription = label)
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (enabled) {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            } else {
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             },
         )
     }
@@ -189,58 +318,100 @@ private fun OcrTextSheet(
     var draft by remember(page.id, page.ocrText) { mutableStateOf(page.ocrText.orEmpty()) }
     val text = page.ocrText.orEmpty()
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 8.dp)) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        shape = RectangleShape,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        tonalElevation = 0.dp,
+        dragHandle = null,
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 8.dp),
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Teks halaman", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                Text(
+                    stringResource(R.string.page_text),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.weight(1f),
+                )
                 if (!editing && text.isNotEmpty()) {
-                    IconButton(onClick = { onCopy(text) }) { Icon(Icons.Outlined.ContentCopy, contentDescription = "Salin") }
-                    IconButton(onClick = { onShare(text) }) { Icon(Icons.Outlined.Share, contentDescription = "Bagikan") }
+                    IconButton(onClick = { onCopy(text) }) {
+                        Icon(Icons.Sharp.ContentCopy, contentDescription = stringResource(R.string.action_text))
+                    }
+                    IconButton(onClick = { onShare(text) }) {
+                        Icon(Icons.Sharp.Share, contentDescription = stringResource(R.string.action_share))
+                    }
                 }
                 if (!editing && page.ocrStatus == OcrStatus.DONE) {
-                    IconButton(onClick = { editing = true }) { Icon(Icons.Outlined.Edit, contentDescription = "Edit") }
+                    IconButton(onClick = { editing = true }) {
+                        Icon(Icons.Sharp.Edit, contentDescription = stringResource(R.string.action_rename))
+                    }
                 }
             }
-            Spacer(Modifier.padding(4.dp))
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
             when {
                 editing -> {
                     OutlinedTextField(
                         value = draft,
                         onValueChange = { draft = it },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp, max = 420.dp),
+                        shape = RectangleShape,
+                        colors = OutlinedTextFieldDefaults.colors(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 200.dp, max = 420.dp),
                     )
-                    Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-                        TextButton(onClick = { editing = false; draft = text }) { Text("Batal") }
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                    ) {
+                        TextButton(onClick = { editing = false; draft = text }) {
+                            Text(stringResource(R.string.action_cancel))
+                        }
                         Spacer(Modifier.width(8.dp))
-                        Button(onClick = { onSave(draft); editing = false }) { Text("Simpan") }
+                        SketchFilledButton(onClick = { onSave(draft); editing = false }) {
+                            Text(stringResource(R.string.action_save))
+                        }
                     }
                 }
                 page.ocrStatus == OcrStatus.PENDING || page.ocrStatus == OcrStatus.RUNNING -> {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 24.dp)) {
-                        CircularProgressIndicator()
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 24.dp),
+                    ) {
+                        CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 3.dp)
                         Spacer(Modifier.width(16.dp))
-                        Text("Sedang mengenali teks…")
+                        Text(stringResource(R.string.recognizing_text))
                     }
                 }
                 page.ocrStatus == OcrStatus.DONE && text.isNotEmpty() -> {
-                    SelectionContainer(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+                    SelectionContainer(
+                        Modifier
+                            .heightIn(max = 420.dp)
+                            .verticalScroll(rememberScrollState()),
+                    ) {
                         Text(text, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
                 else -> {
                     Text(
-                        when (page.ocrStatus) {
-                            OcrStatus.FAILED -> "Pengenalan teks gagal untuk halaman ini."
-                            OcrStatus.DONE -> "Tidak ada teks yang terdeteksi."
-                            else -> "Teks belum diekstrak dari halaman ini."
-                        },
+                        stringResource(
+                            if (page.ocrStatus == OcrStatus.FAILED) R.string.ocr_failed else R.string.no_ocr_text,
+                        ),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(vertical = 16.dp),
                     )
-                    Button(onClick = onRunOcr) { Text("Jalankan OCR") }
+                    SketchFilledButton(onClick = onRunOcr) {
+                        Text(stringResource(R.string.run_ocr))
+                    }
                 }
             }
-            Spacer(Modifier.padding(8.dp))
+            Spacer(Modifier.height(12.dp))
         }
     }
 }

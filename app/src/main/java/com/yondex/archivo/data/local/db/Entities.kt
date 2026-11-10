@@ -142,3 +142,14 @@ data class TagUsage(
     @ColumnInfo(name = "tag_id") val tagId: Long,
     val count: Int,
 )
+
+@Entity(tableName = "library_files", indices = [Index("type"), Index("opened_at")])
+data class LibraryFileEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val title: String,
+    val type: String,
+    val path: String,
+    @ColumnInfo(name = "size_bytes") val sizeBytes: Long,
+    @ColumnInfo(name = "created_at") val createdAt: Long,
+    @ColumnInfo(name = "opened_at") val openedAt: Long,
+)
