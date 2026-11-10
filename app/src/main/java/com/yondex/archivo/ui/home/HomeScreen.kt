@@ -99,6 +99,7 @@ import com.yondex.archivo.ui.components.SketchIconButton
 import com.yondex.archivo.ui.components.SketchInk
 import com.yondex.archivo.ui.components.SketchShadowOffset
 import com.yondex.archivo.ui.components.SketchStroke
+import com.yondex.archivo.ui.components.SketchStrokeSelected
 import com.yondex.archivo.ui.components.TagDot
 import com.yondex.archivo.ui.components.TagPickerDialog
 import com.yondex.archivo.ui.components.TextInputDialog
@@ -567,7 +568,7 @@ private fun CategoryRow(selected: HomeFilter, onSelect: (HomeFilter) -> Unit, mo
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .size(64.dp)
-                            .border(if (active) 2.dp else SketchStroke, SketchInk, shape),
+                            .border(if (active) SketchStrokeSelected else SketchStroke, SketchInk, shape),
                     ) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                             when (filter) {

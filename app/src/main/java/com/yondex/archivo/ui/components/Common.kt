@@ -56,7 +56,7 @@ fun TagDot(color: Color, modifier: Modifier = Modifier) {
     Box(
         modifier
             .size(10.dp)
-            .border(1.dp, SketchInk, CircleShape)
+            .border(1.5.dp, SketchInk, CircleShape)
             .background(color, CircleShape),
     )
 }
@@ -69,9 +69,9 @@ fun TagLabel(tag: Tag, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .clip(shape)
-            .background(color.copy(alpha = 0.12f))
-            .border(1.dp, SketchInk, shape)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .background(color.copy(alpha = 0.16f))
+            .border(SketchStroke, SketchInk, shape)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
     ) {
         TagDot(color, Modifier.size(6.dp))
         Spacer(Modifier.width(6.dp))
@@ -167,7 +167,6 @@ private fun SketchFrame(
     content: @Composable () -> Unit,
 ) {
     val shape = RectangleShape
-    val stroke = if (selected) MaterialTheme.colorScheme.primary else SketchInk
     Box(modifier.padding(end = SketchShadowOffset, bottom = SketchShadowOffset)) {
         Box(
             Modifier
@@ -181,8 +180,14 @@ private fun SketchFrame(
             Modifier
                 .zIndex(1f)
                 .clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-                .border(if (selected) 2.dp else SketchStroke, stroke, shape),
+                .background(
+                    if (selected) {
+                        MaterialTheme.colorScheme.tertiaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerLowest
+                    },
+                )
+                .border(if (selected) SketchStrokeSelected else SketchStroke, SketchInk, shape),
         ) {
             content()
         }

@@ -34,9 +34,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -54,6 +51,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -128,7 +126,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(SketchShadowOffset + 14.dp),
         ) {
             SettingsGroup(
                 title = stringResource(R.string.section_appearance),
@@ -278,7 +276,8 @@ private fun SettingsGroup(
                     .matchParentSize()
                     .offset(SketchShadowOffset, SketchShadowOffset)
                     .clip(shape)
-                    .background(SketchInk),
+                    .background(SketchInk)
+                    .zIndex(0f),
             )
             Surface(
                 shape = shape,
@@ -287,6 +286,7 @@ private fun SettingsGroup(
                 shadowElevation = 0.dp,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .zIndex(1f)
                     .border(SketchStroke, SketchInk, shape),
             ) {
                 Column(content = { content() })
@@ -299,7 +299,8 @@ private fun SettingsGroup(
 private fun SettingsDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(horizontal = 16.dp),
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+        thickness = 2.dp,
+        color = SketchInk,
     )
 }
 
@@ -327,23 +328,16 @@ private fun <T> SegmentedSetting(
             }
             Text(title, style = MaterialTheme.typography.bodyLarge)
         }
-        SingleChoiceSegmentedButtonRow(
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
+                .padding(top = 10.dp)
+                .horizontalScroll(rememberScrollState()),
         ) {
             values.forEach { value ->
-                SegmentedButton(
-                    shape = RectangleShape,
+                SketchChip(
                     selected = value == selected,
                     onClick = { onSelect(value) },
-                    border = SegmentedButtonDefaults.borderStroke(SketchInk),
-                    colors = SegmentedButtonDefaults.colors(
-                        activeContainerColor = MaterialTheme.colorScheme.primary,
-                        activeContentColor = MaterialTheme.colorScheme.onPrimary,
-                        inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-                        inactiveContentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
                     label = {
                         Text(
                             label(value),
@@ -351,6 +345,7 @@ private fun <T> SegmentedSetting(
                             style = MaterialTheme.typography.labelLarge,
                         )
                     },
+                    shadowed = false,
                 )
             }
         }
@@ -378,6 +373,8 @@ private fun <T> ChipSetting(
                     selected = value == selected,
                     onClick = { onSelect(value) },
                     label = { Text(label(value)) },
+                    // Dense option rows: border-only so hard shadows don't cover neighbors.
+                    shadowed = false,
                 )
             }
         }
