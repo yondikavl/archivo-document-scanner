@@ -1,0 +1,195 @@
+package com.yondex.archivo.ui.search
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.SearchOff
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.yondex.archivo.data.repository.DocumentRepository
+import com.yondex.archivo.data.repository.asTree
+import com.yondex.archivo.ui.components.DocumentListItem
+import com.yondex.archivo.ui.components.EmptyState
+import com.yondex.archivo.ui.components.TagDot
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchScreen(
+    onBack: () -> Unit,
+    onOpenDocument: (Long) -> Unit,
+    viewModel: SearchViewModel = hiltViewModel(),
+) {
+    val query by viewModel.query.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val folders by viewModel.folders.collectAsStateWithLifecycle()
+    val tags by viewModel.tags.collectAsStateWithLifecycle()
+    val folderFilter by viewModel.folderFilter.collectAsStateWithLifecycle()
+    val tagFilter by viewModel.tagFilter.collectAsStateWithLifecycle()
+    val focusRequester = remember { FocusRequester() }
+    var folderMenu by remember { mutableStateOf(false) }
+    val highlight = SpanStyle(fontWeight = FontWeight.Bold, background = MaterialTheme.colorScheme.tertiaryContainer)
+
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali") }
+                },
+                title = {
+                    TextField(
+                        value = query,
+                        onValueChange = viewModel::setQuery,
+                        placeholder = { Text("Cari judul atau isi dokumen") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        trailingIcon = {
+                            if (query.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.setQuery("") }) {
+                                    Icon(Icons.Default.Close, contentDescription = "Hapus")
+                                }
+                            }
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                        ),
+                        modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                    )
+                },
+            )
+        },
+    ) { padding ->
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.fillMaxSize().padding(padding),
+        ) {
+            item {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        Box {
+                            FilterChip(
+                                selected = folderFilter != null,
+                                onClick = { folderMenu = true },
+                                label = { Text(folders.firstOrNull { it.id == folderFilter }?.name ?: "Semua folder") },
+                                leadingIcon = { Icon(Icons.Outlined.Folder, contentDescription = null) },
+                                trailingIcon = { Icon(Icons.Default.ArrowDropDown, contentDescription = null) },
+                            )
+                            DropdownMenu(expanded = folderMenu, onDismissRequest = { folderMenu = false }) {
+                                DropdownMenuItem(
+                                    text = { Text("Semua folder") },
+                                    onClick = { viewModel.setFolderFilter(null); folderMenu = false },
+                                )
+                                folders.asTree().forEach { (folder, depth) ->
+                                    DropdownMenuItem(
+                                        text = { Text("  ".repeat(depth) + folder.name) },
+                                        onClick = { viewModel.setFolderFilter(folder.id); folderMenu = false },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    items(tags, key = { it.id }) { tag ->
+                        FilterChip(
+                            selected = tag.id in tagFilter,
+                            onClick = { viewModel.toggleTag(tag.id) },
+                            label = { Text(tag.name) },
+                            leadingIcon = { TagDot(Color(tag.color)) },
+                        )
+                    }
+                }
+            }
+
+            if (state.hasQuery && state.results.isEmpty()) {
+                item {
+                    EmptyState(
+                        icon = Icons.Outlined.SearchOff,
+                        title = "Tidak ditemukan",
+                        message = "Tidak ada dokumen yang cocok dengan \"$query\".",
+                        modifier = Modifier.padding(top = 48.dp),
+                    )
+                }
+            }
+
+            items(state.results, key = { it.document.id }) { result ->
+                DocumentListItem(
+                    document = result.document,
+                    selected = false,
+                    onClick = { onOpenDocument(result.document.id) },
+                    onLongClick = {},
+                    subtitle = result.snippet?.takeIf { it.isNotBlank() }?.let { snippet ->
+                        {
+                            Text(
+                                highlightSnippet(snippet, highlight),
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+
+private fun highlightSnippet(snippet: String, style: SpanStyle): AnnotatedString = buildAnnotatedString {
+    var rest = snippet.replace('\n', ' ')
+    while (rest.isNotEmpty()) {
+        val start = rest.indexOf(DocumentRepository.HIGHLIGHT_START)
+        if (start < 0) {
+            append(rest)
+            break
+        }
+        append(rest.substring(0, start))
+        val end = rest.indexOf(DocumentRepository.HIGHLIGHT_END, start + 1).let { if (it < 0) rest.length else it }
+        withStyle(style) { append(rest.substring(start + 1, end)) }
+        rest = if (end + 1 <= rest.length) rest.substring(minOf(end + 1, rest.length)) else ""
+    }
+}
