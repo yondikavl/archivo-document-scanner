@@ -72,6 +72,7 @@ import com.yondex.archivo.ui.components.SketchCard
 import com.yondex.archivo.ui.components.SketchDropdownMenu
 import com.yondex.archivo.ui.components.SketchExtendedFab
 import com.yondex.archivo.ui.components.SketchInk
+import com.yondex.archivo.ui.components.SketchItemGap
 import com.yondex.archivo.ui.components.SketchStroke
 import com.yondex.archivo.ui.components.TagPickerDialog
 import com.yondex.archivo.ui.components.TagRow
@@ -185,8 +186,8 @@ fun DocumentScreen(
         LazyVerticalGrid(
             columns = GridCells.Adaptive(140.dp),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(SketchItemGap),
+            verticalArrangement = Arrangement.spacedBy(SketchItemGap),
             modifier = Modifier.fillMaxSize().padding(padding),
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {

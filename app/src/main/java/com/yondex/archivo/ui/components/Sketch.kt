@@ -61,7 +61,11 @@ val SketchShadowBlack = SketchInk
 
 val SketchStroke = 2.5.dp
 val SketchStrokeSelected = 3.dp
-val SketchShadowOffset = 5.dp
+val SketchShadowOffset = 4.dp
+/** Visible gap between shadowed items (cards already reserve shadow padding). */
+val SketchItemGap = 12.dp
+val SketchSectionGap = 16.dp
+val SketchChipGap = 10.dp
 
 fun Modifier.sketchBorder(
     shape: Shape = RectangleShape,
@@ -284,6 +288,8 @@ fun SketchFilledButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    /** Stretch button to the outer width (use with Modifier.weight / fillMaxWidth). */
+    fillWidth: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
     Box(modifier = modifier.padding(end = SketchShadowOffset, bottom = SketchShadowOffset)) {
@@ -301,7 +307,7 @@ fun SketchFilledButton(
             colors = ButtonDefaults.buttonColors(),
             contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp),
             modifier = Modifier
-                .fillMaxWidth()
+                .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
                 .zIndex(1f)
                 .sketchBorder(RectangleShape, SketchInk, SketchStroke),
             content = content,
@@ -314,6 +320,8 @@ fun SketchOutlinedButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    /** Stretch button to the outer width (use with Modifier.weight / fillMaxWidth). */
+    fillWidth: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
     Box(modifier = modifier.padding(end = SketchShadowOffset, bottom = SketchShadowOffset)) {
@@ -334,7 +342,7 @@ fun SketchOutlinedButton(
             ),
             contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp),
             modifier = Modifier
-                .fillMaxWidth()
+                .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
                 .zIndex(1f)
                 .sketchBorder(RectangleShape, SketchInk, SketchStroke),
             content = content,

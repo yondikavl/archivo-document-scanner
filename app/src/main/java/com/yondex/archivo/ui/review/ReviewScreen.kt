@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -59,6 +60,7 @@ import com.yondex.archivo.ui.components.EmptyState
 import com.yondex.archivo.ui.components.SketchCard
 import com.yondex.archivo.ui.components.SketchFilledButton
 import com.yondex.archivo.ui.components.SketchInk
+import com.yondex.archivo.ui.components.SketchItemGap
 import com.yondex.archivo.ui.components.SketchOutlinedButton
 import com.yondex.archivo.ui.components.SketchStroke
 import com.yondex.archivo.ui.components.TextInputDialog
@@ -114,8 +116,10 @@ fun ReviewScreen(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .navigationBarsPadding()
                         .padding(horizontal = 12.dp, vertical = 10.dp),
                 ) {
                     SketchOutlinedButton(onClick = onBack) {
@@ -123,7 +127,6 @@ fun ReviewScreen(
                         Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.action_add))
                     }
-                    Spacer(Modifier.weight(1f))
                     SketchFilledButton(
                         enabled = pages.isNotEmpty() && !saving && busy.isEmpty(),
                         onClick = { if (viewModel.isAddingToExisting) viewModel.save(null) else askTitle = true },
@@ -151,8 +154,8 @@ fun ReviewScreen(
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(150.dp),
                 contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(SketchItemGap),
+                verticalArrangement = Arrangement.spacedBy(SketchItemGap),
                 modifier = Modifier.fillMaxSize().padding(padding),
             ) {
                 itemsIndexed(pages, key = { _, page -> page.id }) { index, page ->

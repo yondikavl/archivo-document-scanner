@@ -34,8 +34,10 @@ import com.yondex.archivo.R
 import com.yondex.archivo.domain.model.ExportQuality
 import com.yondex.archivo.domain.model.PdfPageSize
 import com.yondex.archivo.ui.components.SketchChip
+import com.yondex.archivo.ui.components.SketchChipGap
 import com.yondex.archivo.ui.components.SketchFilledButton
 import com.yondex.archivo.ui.components.SketchInk
+import com.yondex.archivo.ui.components.SketchItemGap
 import com.yondex.archivo.ui.components.SketchOutlinedButton
 import com.yondex.archivo.ui.label
 
@@ -68,8 +70,8 @@ fun ExportSheet(
         },
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(SketchItemGap),
+            modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp),
         ) {
             Text(stringResource(R.string.export_document), style = MaterialTheme.typography.titleLarge)
 
@@ -92,12 +94,13 @@ fun ExportSheet(
                 )
             }
 
-            Spacer(Modifier.height(4.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(SketchItemGap), modifier = Modifier.fillMaxWidth()) {
                 SketchOutlinedButton(
                     enabled = !exporting && canSave,
                     onClick = { onSave(options) },
                     modifier = Modifier.weight(1f),
+                    fillWidth = true,
                 ) {
                     Icon(Icons.Sharp.Download, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
@@ -107,6 +110,7 @@ fun ExportSheet(
                     enabled = !exporting,
                     onClick = { onShare(options) },
                     modifier = Modifier.weight(1f),
+                    fillWidth = true,
                 ) {
                     if (exporting) {
                         CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
@@ -140,7 +144,7 @@ private fun <T> OptionGroup(
 ) {
     Column {
         Text(title, style = MaterialTheme.typography.labelLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(SketchChipGap)) {
             values.forEach { value ->
                 SketchChip(selected = value == selected, onClick = { onSelect(value) }, label = { Text(label(value)) })
             }

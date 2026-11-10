@@ -160,7 +160,7 @@ fun PdfReaderScreen(
             }
             else -> LazyColumn(
                 contentPadding = PaddingValues(0.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize().padding(padding),
             ) {
                 itemsIndexed(pages) { index, bitmap ->

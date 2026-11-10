@@ -46,6 +46,7 @@ import com.yondex.archivo.ui.components.ConfirmDialog
 import com.yondex.archivo.ui.components.EmptyState
 import com.yondex.archivo.ui.components.SketchCard
 import com.yondex.archivo.ui.components.SketchFab
+import com.yondex.archivo.ui.components.SketchItemGap
 import com.yondex.archivo.ui.components.TagDot
 import com.yondex.archivo.ui.components.TagEditorDialog
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -114,7 +115,7 @@ fun TagsScreen(onBack: () -> Unit, viewModel: TagsViewModel = hiltViewModel()) {
         }
         LazyColumn(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(SketchItemGap),
             modifier = Modifier.fillMaxSize().padding(padding),
         ) {
             items(tags, key = { it.first.id }) { (tag, count) ->

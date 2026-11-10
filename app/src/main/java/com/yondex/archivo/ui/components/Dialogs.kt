@@ -281,7 +281,7 @@ fun TagEditorDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -291,7 +291,7 @@ fun TagEditorDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 TagRepository.PALETTE.chunked(6).forEach { row ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         row.forEach { option ->
                             Box(
                                 contentAlignment = Alignment.Center,

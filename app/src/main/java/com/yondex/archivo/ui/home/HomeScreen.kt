@@ -96,7 +96,9 @@ import com.yondex.archivo.ui.components.SketchChip
 import com.yondex.archivo.ui.components.SketchDropdownMenu
 import com.yondex.archivo.ui.components.SketchFab
 import com.yondex.archivo.ui.components.SketchIconButton
+import com.yondex.archivo.ui.components.SketchChipGap
 import com.yondex.archivo.ui.components.SketchInk
+import com.yondex.archivo.ui.components.SketchItemGap
 import com.yondex.archivo.ui.components.SketchShadowOffset
 import com.yondex.archivo.ui.components.SketchStroke
 import com.yondex.archivo.ui.components.SketchStrokeSelected
@@ -201,8 +203,8 @@ fun HomeScreen(
         LazyVerticalGrid(
                 columns = if (isGrid) GridCells.Adaptive(156.dp) else GridCells.Fixed(1),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 104.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(SketchItemGap),
+                verticalArrangement = Arrangement.spacedBy(SketchItemGap),
                 modifier = Modifier.fillMaxSize().padding(padding),
             ) {
                 if (onBack == null && !state.isSelecting) {
@@ -216,13 +218,13 @@ fun HomeScreen(
                         )
                     }
                     fullWidthItem("search") {
-                        SearchEntry(onClick = onSearch, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
+                        SearchEntry(onClick = onSearch, modifier = Modifier.padding(top = 4.dp, bottom = SketchItemGap))
                     }
                     fullWidthItem("categories") {
                         CategoryRow(
                             selected = state.filter,
                             onSelect = viewModel::setFilter,
-                            modifier = Modifier.padding(bottom = 8.dp),
+                            modifier = Modifier.padding(bottom = SketchItemGap),
                         )
                     }
                     state.recentLibrary?.let { recent ->
@@ -244,7 +246,7 @@ fun HomeScreen(
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             LazyRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
                                 modifier = Modifier.weight(1f),
                             ) {
                                 items(state.tags, key = { it.id }) { tag ->
@@ -494,13 +496,13 @@ private fun GreetingHeader(
             contentDescription = stringResource(R.string.import_file),
             onClick = onImport,
         )
-        Spacer(Modifier.width(10.dp))
+        Spacer(Modifier.width(SketchChipGap))
         SketchIconButton(
             icon = Icons.AutoMirrored.Sharp.Label,
             contentDescription = stringResource(R.string.manage_tags),
             onClick = onManageTags,
         )
-        Spacer(Modifier.width(10.dp))
+        Spacer(Modifier.width(SketchChipGap))
         SketchIconButton(
             icon = Icons.Sharp.Settings,
             contentDescription = stringResource(R.string.action_settings),
@@ -539,7 +541,7 @@ private fun CategoryRow(selected: HomeFilter, onSelect: (HomeFilter) -> Unit, mo
         HomeFilter.PDF to R.string.filter_pdf,
     )
     val shape = RectangleShape
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = modifier) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(SketchItemGap), modifier = modifier) {
         items(items, key = { it.first.name }) { (filter, label) ->
             val active = filter == selected
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -583,7 +585,7 @@ private fun CategoryRow(selected: HomeFilter, onSelect: (HomeFilter) -> Unit, mo
                         }
                     }
                 }
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(8.dp))
                 Text(
                     stringResource(label),
                     style = MaterialTheme.typography.labelMedium,
@@ -601,7 +603,7 @@ private fun RecentlyAddedCard(file: LibraryFile, onClick: () -> Unit) {
         paper = MaterialTheme.colorScheme.primary,
         ink = SketchInk,
         selected = false,
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -689,7 +691,7 @@ private fun SectionHeader(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 10.dp, bottom = 6.dp),
+            .padding(top = SketchItemGap, bottom = 6.dp),
     ) {
         Text(
             text,

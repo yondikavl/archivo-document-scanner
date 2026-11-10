@@ -66,7 +66,9 @@ import com.yondex.archivo.domain.model.PageFilter
 import com.yondex.archivo.domain.model.PdfPageSize
 import com.yondex.archivo.domain.model.ThemeMode
 import com.yondex.archivo.ui.components.SketchChip
+import com.yondex.archivo.ui.components.SketchChipGap
 import com.yondex.archivo.ui.components.SketchInk
+import com.yondex.archivo.ui.components.SketchSectionGap
 import com.yondex.archivo.ui.components.SketchShadowOffset
 import com.yondex.archivo.ui.components.SketchStroke
 import com.yondex.archivo.ui.label
@@ -125,8 +127,8 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(SketchShadowOffset + 14.dp),
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(SketchSectionGap),
         ) {
             SettingsGroup(
                 title = stringResource(R.string.section_appearance),
@@ -247,7 +249,7 @@ private fun SettingsGroup(
     content: @Composable () -> Unit,
 ) {
     val shape = MaterialTheme.shapes.large
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -329,9 +331,9 @@ private fun <T> SegmentedSetting(
             Text(title, style = MaterialTheme.typography.bodyLarge)
         }
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
             modifier = Modifier
-                .padding(top = 10.dp)
+                .padding(top = 12.dp)
                 .horizontalScroll(rememberScrollState()),
         ) {
             values.forEach { value ->
@@ -363,9 +365,9 @@ private fun <T> ChipSetting(
     Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
         Text(title, style = MaterialTheme.typography.bodyLarge)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
             modifier = Modifier
-                .padding(top = 10.dp)
+                .padding(top = 12.dp)
                 .horizontalScroll(rememberScrollState()),
         ) {
             values.forEach { value ->

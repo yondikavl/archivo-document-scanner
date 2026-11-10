@@ -53,7 +53,9 @@ import com.yondex.archivo.data.repository.asTree
 import com.yondex.archivo.ui.components.DocumentListItem
 import com.yondex.archivo.ui.components.EmptyState
 import com.yondex.archivo.ui.components.SketchChip
+import com.yondex.archivo.ui.components.SketchChipGap
 import com.yondex.archivo.ui.components.SketchDropdownMenu
+import com.yondex.archivo.ui.components.SketchItemGap
 import com.yondex.archivo.ui.components.TagDot
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,11 +117,11 @@ fun SearchScreen(
     ) { padding ->
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(SketchItemGap),
             modifier = Modifier.fillMaxSize().padding(padding),
         ) {
             item {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(SketchChipGap)) {
                     item {
                         Box {
                             SketchChip(

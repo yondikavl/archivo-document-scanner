@@ -82,7 +82,7 @@ fun TagLabel(tag: Tag, modifier: Modifier = Modifier) {
 @Composable
 fun TagRow(tags: List<Tag>, modifier: Modifier = Modifier, max: Int = 3) {
     if (tags.isEmpty()) return
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = modifier) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = modifier) {
         tags.take(max).forEach { TagLabel(it) }
         if (tags.size > max) {
             Text(

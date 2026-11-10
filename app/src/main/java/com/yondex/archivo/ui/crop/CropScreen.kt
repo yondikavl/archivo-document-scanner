@@ -153,11 +153,11 @@ fun CropScreen(
                         }
                     }
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .horizontalScroll(rememberScrollState())
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
                     ) {
                         PageFilter.entries.forEach { filter ->
                             SketchChip(
