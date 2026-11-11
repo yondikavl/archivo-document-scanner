@@ -11,16 +11,22 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -34,6 +40,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
 import androidx.compose.material.icons.automirrored.sharp.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.sharp.Sort
+import androidx.compose.material.icons.sharp.CallMerge
 import androidx.compose.material.icons.sharp.Close
 import androidx.compose.material.icons.sharp.DocumentScanner
 import androidx.compose.material.icons.sharp.MoreVert
@@ -46,7 +53,6 @@ import androidx.compose.material.icons.automirrored.sharp.DriveFileMove
 import androidx.compose.material.icons.sharp.Folder as FolderIcon
 import androidx.compose.material.icons.sharp.GridView
 import androidx.compose.material.icons.automirrored.sharp.Label
-import androidx.compose.material.icons.sharp.Settings
 import androidx.compose.material.icons.automirrored.sharp.ViewList
 import androidx.compose.material.icons.sharp.UploadFile
 import androidx.compose.material3.DropdownMenuItem
@@ -94,7 +100,6 @@ import com.yondex.archivo.ui.components.FolderPickerDialog
 import com.yondex.archivo.ui.components.SketchCard
 import com.yondex.archivo.ui.components.SketchChip
 import com.yondex.archivo.ui.components.SketchDropdownMenu
-import com.yondex.archivo.ui.components.SketchFab
 import com.yondex.archivo.ui.components.SketchIconButton
 import com.yondex.archivo.ui.components.SketchChipGap
 import com.yondex.archivo.ui.components.SketchInk
@@ -119,17 +124,16 @@ private sealed interface HomeDialog {
     data class DeleteLibraryFile(val file: LibraryFile) : HomeDialog
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     onBack: (() -> Unit)?,
     onOpenFolder: (Long) -> Unit,
     onOpenDocument: (Long) -> Unit,
     onOpenPdf: (Long) -> Unit,
-    onScan: (folderId: Long?) -> Unit,
     onSearch: () -> Unit,
     onManageTags: () -> Unit,
-    onSettings: () -> Unit,
+    onMerge: (documentIds: String, libraryFileIds: String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -160,9 +164,15 @@ fun HomeScreen(
             ) { selecting ->
                 if (selecting) {
                     SelectionTopBar(
-                        count = state.selection.size,
+                        count = state.selectionCount,
+                        canMerge = state.canMerge,
+                        hasDocuments = state.selection.isNotEmpty(),
                         onClose = viewModel::clearSelection,
                         onSelectAll = viewModel::selectAll,
+                        onMerge = {
+                            onMerge(viewModel.mergeDocumentIds(), viewModel.mergeLibraryIds())
+                            viewModel.clearSelection()
+                        },
                         onTag = { dialog = HomeDialog.TagDocuments },
                         onMove = { dialog = HomeDialog.MoveDocuments },
                         onDelete = { dialog = HomeDialog.DeleteDocuments },
@@ -180,19 +190,14 @@ fun HomeScreen(
                         onSort = viewModel::setSortOrder,
                         onCreateFolder = { dialog = HomeDialog.CreateFolder },
                         onManageTags = onManageTags,
-                        onSettings = onSettings,
                     )
                 }
             }
         },
         containerColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = {
-            if (!state.isSelecting) {
-                SketchFab(onClick = { onScan(state.folderId) }) {
-                    Icon(Icons.Sharp.DocumentScanner, contentDescription = stringResource(R.string.action_scan))
-                }
-            }
-        },
+        contentWindowInsets = WindowInsets.safeDrawing.only(
+            WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
+        ),
     ) { padding ->
         val isGrid = state.viewMode == ViewMode.GRID
         val isAllTab = state.filter == HomeFilter.ALL
@@ -202,7 +207,7 @@ fun HomeScreen(
         val showMoreDocuments = isAllTab && state.documents.size > ALL_PREVIEW_LIMIT
         LazyVerticalGrid(
                 columns = if (isGrid) GridCells.Adaptive(156.dp) else GridCells.Fixed(1),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 104.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
                 horizontalArrangement = Arrangement.spacedBy(SketchItemGap),
                 verticalArrangement = Arrangement.spacedBy(SketchItemGap),
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -214,7 +219,6 @@ fun HomeScreen(
                                 importLauncher.launch(arrayOf("application/pdf"))
                             },
                             onManageTags = onManageTags,
-                            onSettings = onSettings,
                         )
                     }
                     fullWidthItem("search") {
@@ -320,9 +324,15 @@ fun HomeScreen(
                         span = { GridItemSpan(maxLineSpan) },
                     ) { file ->
                         Box {
+                            val selected = file.id in state.pdfSelection
                             LibraryFileRow(
                                 file = file,
-                                onClick = { onOpenPdf(file.id) },
+                                selected = selected,
+                                onClick = {
+                                    if (state.isSelecting) viewModel.togglePdfSelection(file.id)
+                                    else onOpenPdf(file.id)
+                                },
+                                onLongClick = { viewModel.togglePdfSelection(file.id) },
                                 onMore = { libraryMenu = file },
                             )
                             SketchDropdownMenu(
@@ -456,7 +466,7 @@ fun HomeScreen(
     }
 }
 
-private const val ALL_PREVIEW_LIMIT = 3
+private const val ALL_PREVIEW_LIMIT = 2
 
 private fun LazyGridScope.fullWidthItem(key: String, content: @Composable () -> Unit) {
     item(key = key, span = { GridItemSpan(maxLineSpan) }) { content() }
@@ -466,7 +476,6 @@ private fun LazyGridScope.fullWidthItem(key: String, content: @Composable () -> 
 private fun GreetingHeader(
     onImport: () -> Unit,
     onManageTags: () -> Unit,
-    onSettings: () -> Unit,
 ) {
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     val greeting = stringResource(
@@ -492,21 +501,15 @@ private fun GreetingHeader(
             )
         }
         SketchIconButton(
-            icon = Icons.Sharp.UploadFile,
-            contentDescription = stringResource(R.string.import_file),
-            onClick = onImport,
-        )
-        Spacer(Modifier.width(SketchChipGap))
-        SketchIconButton(
             icon = Icons.AutoMirrored.Sharp.Label,
             contentDescription = stringResource(R.string.manage_tags),
             onClick = onManageTags,
         )
         Spacer(Modifier.width(SketchChipGap))
         SketchIconButton(
-            icon = Icons.Sharp.Settings,
-            contentDescription = stringResource(R.string.action_settings),
-            onClick = onSettings,
+            icon = Icons.Sharp.UploadFile,
+            contentDescription = stringResource(R.string.import_file),
+            onClick = onImport,
         )
     }
 }
@@ -640,8 +643,19 @@ private fun RecentlyAddedCard(file: LibraryFile, onClick: () -> Unit) {
 }
 
 @Composable
-private fun LibraryFileRow(file: LibraryFile, onClick: () -> Unit, onMore: () -> Unit) {
-    SketchCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+private fun LibraryFileRow(
+    file: LibraryFile,
+    selected: Boolean = false,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {},
+    onMore: () -> Unit,
+) {
+    SketchCard(
+        selected = selected,
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(12.dp),
@@ -725,7 +739,6 @@ private fun FolderTopBar(
     onSort: (SortOrder) -> Unit,
     onCreateFolder: () -> Unit,
     onManageTags: () -> Unit,
-    onSettings: () -> Unit,
 ) {
     var sortMenu by remember { mutableStateOf(false) }
     var moreMenu by remember { mutableStateOf(false) }
@@ -776,11 +789,6 @@ private fun FolderTopBar(
                         leadingIcon = { Icon(Icons.AutoMirrored.Sharp.Label, contentDescription = null) },
                         onClick = { onManageTags(); moreMenu = false },
                     )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_settings)) },
-                        leadingIcon = { Icon(Icons.Sharp.Settings, contentDescription = null) },
-                        onClick = { onSettings(); moreMenu = false },
-                    )
                 }
             }
         },
@@ -791,8 +799,11 @@ private fun FolderTopBar(
 @Composable
 private fun SelectionTopBar(
     count: Int,
+    canMerge: Boolean,
+    hasDocuments: Boolean,
     onClose: () -> Unit,
     onSelectAll: () -> Unit,
+    onMerge: () -> Unit,
     onTag: () -> Unit,
     onMove: () -> Unit,
     onDelete: () -> Unit,
@@ -814,13 +825,16 @@ private fun SelectionTopBar(
             IconButton(onClick = onSelectAll) {
                 Icon(Icons.Sharp.SelectAll, contentDescription = stringResource(R.string.action_select_all))
             }
-            IconButton(onClick = onTag) {
+            IconButton(onClick = onMerge, enabled = canMerge) {
+                Icon(Icons.Sharp.CallMerge, contentDescription = stringResource(R.string.merge_action))
+            }
+            IconButton(onClick = onTag, enabled = hasDocuments) {
                 Icon(Icons.AutoMirrored.Sharp.Label, contentDescription = stringResource(R.string.action_tag))
             }
-            IconButton(onClick = onMove) {
+            IconButton(onClick = onMove, enabled = hasDocuments) {
                 Icon(Icons.AutoMirrored.Sharp.DriveFileMove, contentDescription = stringResource(R.string.action_move))
             }
-            IconButton(onClick = onDelete) {
+            IconButton(onClick = onDelete, enabled = hasDocuments) {
                 Icon(Icons.Sharp.Delete, contentDescription = stringResource(R.string.action_delete))
             }
         },

@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
+import androidx.compose.material.icons.sharp.CallSplit
 import androidx.compose.material.icons.sharp.Delete
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -120,6 +121,7 @@ class PdfReaderViewModel @Inject constructor(
 @Composable
 fun PdfReaderScreen(
     onBack: () -> Unit,
+    onSplit: (fileId: Long) -> Unit,
     viewModel: PdfReaderViewModel = hiltViewModel(),
 ) {
     val file by viewModel.file.collectAsStateWithLifecycle()
@@ -143,6 +145,12 @@ fun PdfReaderScreen(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = { file?.id?.let(onSplit) },
+                        enabled = file != null && pages.isNotEmpty(),
+                    ) {
+                        Icon(Icons.Sharp.CallSplit, contentDescription = stringResource(R.string.split_action))
+                    }
                     IconButton(onClick = { confirmDelete = true }) {
                         Icon(Icons.Sharp.Delete, contentDescription = stringResource(R.string.action_delete))
                     }

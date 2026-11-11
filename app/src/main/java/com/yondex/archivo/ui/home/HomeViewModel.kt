@@ -47,19 +47,24 @@ data class HomeUiState(
     val tags: List<Tag> = emptyList(),
     val tagFilter: Set<Long> = emptySet(),
     val selection: Set<Long> = emptySet(),
+    val pdfSelection: Set<Long> = emptySet(),
     val filter: HomeFilter = HomeFilter.ALL,
     val viewMode: ViewMode = ViewMode.GRID,
     val sortOrder: SortOrder = SortOrder.UPDATED_DESC,
 ) {
     val currentFolder: Folder? get() = path.lastOrNull()
-    val isSelecting: Boolean get() = selection.isNotEmpty()
+    val isSelecting: Boolean get() = selection.isNotEmpty() || pdfSelection.isNotEmpty()
     val selectedDocuments: List<Document> get() = documents.filter { it.id in selection }
+    val selectedPdfs: List<LibraryFile> get() = libraryFiles.filter { it.id in pdfSelection }
+    val selectionCount: Int get() = selection.size + pdfSelection.size
+    val canMerge: Boolean get() = selectionCount >= 2
     val recentLibrary: LibraryFile? get() = libraryFiles.maxByOrNull { it.openedAt }
 }
 
 private data class LocalState(
     val tagFilter: Set<Long> = emptySet(),
     val selection: Set<Long> = emptySet(),
+    val pdfSelection: Set<Long> = emptySet(),
     val filter: HomeFilter = HomeFilter.ALL,
 )
 
@@ -126,6 +131,7 @@ class HomeViewModel @Inject constructor(
             HomeFilter.SCANS -> emptyList()
         }
         val visibleIds = filteredDocs.map { it.id }.toSet()
+        val visiblePdfIds = filteredLibrary.map { it.id }.toSet()
         return HomeUiState(
             isLoading = false,
             folderId = folderId,
@@ -137,16 +143,23 @@ class HomeViewModel @Inject constructor(
             tags = tags,
             tagFilter = validTagFilter,
             selection = local.selection.intersect(visibleIds),
+            pdfSelection = local.pdfSelection.intersect(visiblePdfIds),
             filter = local.filter,
             viewMode = settings.viewMode,
             sortOrder = settings.sortOrder,
         )
     }
 
-    fun setFilter(filter: HomeFilter) = local.update { it.copy(filter = filter, selection = emptySet()) }
+    fun setFilter(filter: HomeFilter) = local.update {
+        it.copy(filter = filter, selection = emptySet(), pdfSelection = emptySet())
+    }
 
     fun toggleTagFilter(tagId: Long) = local.update {
-        it.copy(tagFilter = if (tagId in it.tagFilter) it.tagFilter - tagId else it.tagFilter + tagId, selection = emptySet())
+        it.copy(
+            tagFilter = if (tagId in it.tagFilter) it.tagFilter - tagId else it.tagFilter + tagId,
+            selection = emptySet(),
+            pdfSelection = emptySet(),
+        )
     }
 
     fun clearTagFilter() = local.update { it.copy(tagFilter = emptySet()) }
@@ -155,9 +168,24 @@ class HomeViewModel @Inject constructor(
         it.copy(selection = if (documentId in it.selection) it.selection - documentId else it.selection + documentId)
     }
 
-    fun selectAll() = local.update { it.copy(selection = uiState.value.documents.map { d -> d.id }.toSet()) }
+    fun togglePdfSelection(fileId: Long) = local.update {
+        it.copy(
+            pdfSelection = if (fileId in it.pdfSelection) it.pdfSelection - fileId else it.pdfSelection + fileId,
+        )
+    }
 
-    fun clearSelection() = local.update { it.copy(selection = emptySet()) }
+    fun selectAll() = local.update {
+        it.copy(
+            selection = uiState.value.documents.map { d -> d.id }.toSet(),
+            pdfSelection = uiState.value.libraryFiles.map { f -> f.id }.toSet(),
+        )
+    }
+
+    fun clearSelection() = local.update { it.copy(selection = emptySet(), pdfSelection = emptySet()) }
+
+    fun mergeDocumentIds(): String = uiState.value.selection.joinToString(",")
+
+    fun mergeLibraryIds(): String = uiState.value.pdfSelection.joinToString(",")
 
     fun deleteSelected() = launchWithSelection { documentRepository.delete(it) }
 

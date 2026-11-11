@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -92,6 +93,8 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.text.recognition)
+    implementation(libs.mlkit.barcode.scanning)
+    implementation(libs.androidx.camera.mlkit.vision)
     implementation(libs.opencv)
     implementation(libs.coil.compose)
 

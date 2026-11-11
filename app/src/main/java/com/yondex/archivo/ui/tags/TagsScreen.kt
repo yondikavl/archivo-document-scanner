@@ -5,9 +5,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -86,6 +90,9 @@ fun TagsScreen(onBack: () -> Unit, viewModel: TagsViewModel = hiltViewModel()) {
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets.safeDrawing.only(
+            WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
+        ),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.manage_tags)) },

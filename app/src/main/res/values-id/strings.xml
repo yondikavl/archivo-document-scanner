@@ -19,9 +19,15 @@
     <string name="action_scan">Scan</string>
     <string name="action_tag">Tag</string>
     <string name="action_settings">Pengaturan</string>
+    <string name="action_copy">Salin</string>
     <string name="action_select_all">Pilih semua</string>
     <string name="cd_selected">Dipilih</string>
     <string name="home_label">Beranda</string>
+    <string name="nav_home">Beranda</string>
+    <string name="nav_qr">QR</string>
+    <string name="nav_scan">Scan</string>
+    <string name="nav_tags">Tag</string>
+    <string name="nav_settings">Setelan</string>
     <string name="folder">Folder</string>
     <string name="documents">Dokumen</string>
     <string name="pages_short">%d hal</string>
@@ -202,4 +208,28 @@
     <string name="auto_ocr">OCR otomatis</string>
     <string name="auto_ocr_summary">Ekstrak teks setiap halaman setelah disimpan</string>
     <string name="app_version">Versi %1$s</string>
+
+    <!-- Merge / Split -->
+    <string name="merge_title">Gabungkan</string>
+    <string name="merge_message">Urutkan item, lalu gabungkan jadi satu dokumen baru.</string>
+    <string name="merge_title_label">Judul dokumen hasil gabungan</string>
+    <string name="merge_action">Gabungkan</string>
+    <string name="split_title">Pisahkan</string>
+    <string name="split_message">Pilih halaman untuk diekstrak ke dokumen baru.</string>
+    <string name="split_title_label">Judul dokumen baru</string>
+    <string name="split_action">Pisahkan</string>
+    <string name="split_action_count">Pisahkan (%d)</string>
+    <string name="split_mode_one">Satu dokumen</string>
+    <string name="split_mode_each">Tiap halaman</string>
+    <string name="split_remove_from_source">Hapus halaman dari dokumen asli</string>
+
+    <!-- QR Scanner -->
+    <string name="qr_scanner_title">Pemindai QR</string>
+    <string name="qr_hint">Arahkan QR code atau barcode ke dalam bingkai</string>
+    <string name="qr_result_title">Hasil scan</string>
+    <string name="qr_copied">Disalin ke clipboard</string>
+    <string name="qr_open">Buka tautan</string>
+    <string name="qr_open_failed">Tidak bisa membuka tautan</string>
+    <string name="qr_scan_again">Scan lagi</string>
+    <string name="qr_permission_message">Archivo membutuhkan akses kamera untuk memindai QR code dan barcode.</string>
 </resources>

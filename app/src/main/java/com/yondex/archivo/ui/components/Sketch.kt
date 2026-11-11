@@ -360,18 +360,74 @@ fun SketchBottomBar(
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 0.dp,
         tonalElevation = 0.dp,
-        modifier = modifier
-            .fillMaxWidth()
-            .sketchBorder(RectangleShape, SketchInk, SketchStroke),
+        modifier = modifier.fillMaxWidth(),
     ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .height(76.dp)
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
-            content = content,
+        Column(Modifier.fillMaxWidth()) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(SketchStroke)
+                    .background(SketchInk),
+            )
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .padding(horizontal = SketchSectionGap, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
+                verticalAlignment = Alignment.CenterVertically,
+                content = content,
+            )
+        }
+    }
+}
+
+@Composable
+fun RowScope.SketchBottomNavItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+    icon: ImageVector,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+            .weight(1f)
+            .fillMaxSize()
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                RectangleShape,
+            )
+            .then(
+                if (selected) Modifier.border(SketchStroke, SketchInk, RectangleShape) else Modifier,
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(bounded = true),
+                onClick = onClick,
+            )
+            .padding(horizontal = 4.dp),
+    ) {
+        Icon(
+            icon,
+            contentDescription = label,
+            tint = contentColor,
+            modifier = Modifier.size(22.dp),
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = contentColor,
+            maxLines = 1,
+            softWrap = false,
         )
     }
 }

@@ -25,6 +25,7 @@ import androidx.compose.material.icons.automirrored.sharp.DriveFileMove
 import androidx.compose.material.icons.automirrored.sharp.Label
 import androidx.compose.material.icons.sharp.MoreVert
 import androidx.compose.material.icons.sharp.AddAPhoto
+import androidx.compose.material.icons.sharp.CallSplit
 import androidx.compose.material.icons.sharp.Delete
 import androidx.compose.material.icons.sharp.DocumentScanner
 import androidx.compose.material.icons.sharp.Edit
@@ -90,6 +91,7 @@ fun DocumentScreen(
     onOpenPage: (index: Int) -> Unit,
     onCropPage: (pageId: Long) -> Unit,
     onAddPages: (documentId: Long) -> Unit,
+    onSplit: (documentId: Long) -> Unit,
     viewModel: DocumentViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -162,6 +164,10 @@ fun DocumentScreen(
                             }
                             MenuItem(stringResource(R.string.rerun_ocr), Icons.AutoMirrored.Sharp.TextSnippet) {
                                 viewModel.runOcr(); menuOpen = false
+                            }
+                            MenuItem(stringResource(R.string.split_action), Icons.Sharp.CallSplit) {
+                                menuOpen = false
+                                onSplit(viewModel.documentId)
                             }
                             MenuItem(stringResource(R.string.action_delete), Icons.Sharp.Delete) {
                                 dialog = DocumentDialog.DELETE; menuOpen = false

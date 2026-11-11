@@ -193,15 +193,16 @@ private fun CameraContent(
             .onFailure { viewModel.onCaptureFailed(it) }
     }
     DisposableEffect(camera) { onDispose { camera.release() } }
-    LaunchedEffect(stability, autoCapture) {
-        if (autoCapture && stability >= 1f && !capturing) capture()
+    val readyToCapture = autoCapture && stability >= 1f
+    LaunchedEffect(readyToCapture) {
+        if (readyToCapture && !capturing) capture()
     }
 
     val hint = when {
         detection?.quad == null -> stringResource(R.string.hint_aim_camera)
-        autoCapture && stability > 0f -> stringResource(R.string.hint_hold_steady)
-        autoCapture -> stringResource(R.string.hint_detected)
-        else -> stringResource(R.string.hint_detected_manual)
+        !autoCapture -> stringResource(R.string.hint_detected_manual)
+        stability >= 0.35f -> stringResource(R.string.hint_hold_steady)
+        else -> stringResource(R.string.hint_detected)
     }
 
     Column(Modifier.fillMaxSize()) {
@@ -344,7 +345,9 @@ private fun DetectionOverlay(detection: LiveDetection?, stability: Float, modifi
             points.drop(1).forEach { lineTo(it.x, it.y) }
             close()
         }
-        drawPath(path, color.copy(alpha = 0.15f + 0.2f * stability))
+        // Quantize fill so small stability ticks don't visibly pulse the overlay.
+        val fillStep = ((stability * 10f).toInt() / 10f)
+        drawPath(path, color.copy(alpha = 0.18f + 0.16f * fillStep))
         drawPath(path, color, style = Stroke(width = 3.dp.toPx()))
 
         val (tl, tr, br, bl) = points

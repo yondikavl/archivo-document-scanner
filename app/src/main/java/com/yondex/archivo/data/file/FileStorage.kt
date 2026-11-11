@@ -57,6 +57,12 @@ class FileStorage @Inject constructor(
         return target
     }
 
+    fun copy(source: File, target: File): File {
+        target.parentFile?.mkdirs()
+        source.copyTo(target, overwrite = true)
+        return target
+    }
+
     fun delete(path: String?) {
         if (!path.isNullOrEmpty()) File(path).delete()
     }

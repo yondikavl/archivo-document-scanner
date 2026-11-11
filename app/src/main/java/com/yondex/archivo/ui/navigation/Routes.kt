@@ -33,4 +33,14 @@ data object TagsRoute
 data object SettingsRoute
 
 @Serializable
+data object QrScannerRoute
+
+@Serializable
 data class PdfReaderRoute(val fileId: Long)
+
+/** Comma-separated ids, e.g. "1,2,3". */
+@Serializable
+data class MergeRoute(val documentIds: String = "", val libraryFileIds: String = "")
+
+@Serializable
+data class SplitRoute(val documentId: Long = NO_ID, val libraryFileId: Long = NO_ID)
