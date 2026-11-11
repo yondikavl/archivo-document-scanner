@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Inset keeps the mark from filling the splash icon mask too tightly. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/logo_archivo_only"
+    android:inset="18%" />
