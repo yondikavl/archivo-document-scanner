@@ -41,7 +41,7 @@ fun ArchivoBottomBar(
     Column(
         modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.surface)
             .navigationBarsPadding(),
     ) {
         SketchBottomBar {

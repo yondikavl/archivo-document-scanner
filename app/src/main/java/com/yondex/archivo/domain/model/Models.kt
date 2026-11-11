@@ -66,6 +66,23 @@ data class LibraryFile(
     val openedAt: Long,
 )
 
+enum class PdfAnnotationType { HIGHLIGHT, COMMENT }
+
+data class PdfAnnotation(
+    val id: Long,
+    val libraryFileId: Long,
+    val pageIndex: Int,
+    val type: PdfAnnotationType,
+    /** Normalized page coords in 0..1. */
+    val left: Float,
+    val top: Float,
+    val right: Float,
+    val bottom: Float,
+    val color: Long,
+    val text: String?,
+    val createdAt: Long,
+)
+
 enum class SortOrder { UPDATED_DESC, CREATED_DESC, NAME_ASC, PAGES_DESC }
 
 enum class PdfPageSize { A4, LETTER, FIT_IMAGE }

@@ -3,8 +3,10 @@ package com.yondex.archivo.ui.settings
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -43,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -65,8 +68,8 @@ import com.yondex.archivo.domain.model.ExportQuality
 import com.yondex.archivo.domain.model.PageFilter
 import com.yondex.archivo.domain.model.PdfPageSize
 import com.yondex.archivo.domain.model.ThemeMode
-import com.yondex.archivo.ui.components.SketchSectionGap
 import com.yondex.archivo.ui.components.SketchShape
+import com.yondex.archivo.ui.components.SketchShapeLarge
 import com.yondex.archivo.ui.label
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -104,7 +107,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 title = {
                     Text(
                         stringResource(R.string.settings),
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.headlineSmall,
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -126,8 +129,8 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(SketchSectionGap),
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             SettingsGroup(
                 title = stringResource(R.string.section_appearance),
@@ -213,32 +216,31 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 12.dp, horizontal = 16.dp),
+                        .padding(vertical = 20.dp, horizontal = 16.dp),
                 ) {
                     Image(
                         painter = painterResource(R.drawable.logo_archivo),
                         contentDescription = stringResource(R.string.app_name),
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
-                            .size(72.dp)
-                            .clip(SketchShape),
+                            .size(88.dp)
+                            .clip(SketchShapeLarge),
                     )
                     Text(
                         stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(top = 14.dp),
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(top = 16.dp),
                     )
                     Text(
                         stringResource(R.string.app_version, BuildConfig.VERSION_NAME),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp),
+                        modifier = Modifier.padding(top = 6.dp),
                     )
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(20.dp))
         }
     }
 }
@@ -280,34 +282,36 @@ private fun SettingsGroup(
     framed: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.padding(start = 4.dp, end = 4.dp),
         ) {
             Icon(
                 painter = painter,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(22.dp),
             )
             Text(
                 title,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
         if (framed) {
             Surface(
-                shape = SketchShape,
+                shape = SketchShapeLarge,
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp,
                 shadowElevation = 0.dp,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Column(content = { content() })
+                Column(
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    content = { content() },
+                )
             }
         } else {
             content()
@@ -318,9 +322,9 @@ private fun SettingsGroup(
 @Composable
 private fun SettingsDivider() {
     HorizontalDivider(
-        modifier = Modifier.padding(horizontal = 16.dp),
+        modifier = Modifier.padding(horizontal = 18.dp),
         thickness = 1.dp,
-        color = MaterialTheme.colorScheme.outlineVariant,
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
     )
 }
 
@@ -342,27 +346,36 @@ private fun <T> OptionSetting(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { open = true }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
         if (iconRes != null) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .padding(end = 12.dp)
-                    .size(20.dp),
-            )
+                    .padding(end = 14.dp)
+                    .size(40.dp)
+                    .clip(SketchShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+            ) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
         Text(
             title,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
             modifier = Modifier.weight(1f),
         )
         Text(
             selectedLabel,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = 12.dp),
@@ -372,8 +385,8 @@ private fun <T> OptionSetting(
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
-                .padding(start = 4.dp)
-                .size(20.dp),
+                .padding(start = 6.dp)
+                .size(18.dp),
         )
     }
 
@@ -382,8 +395,8 @@ private fun <T> OptionSetting(
         ModalBottomSheet(
             onDismissRequest = { open = false },
             sheetState = sheetState,
-            shape = SketchShape,
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            shape = SketchShapeLarge,
+            containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 0.dp,
             dragHandle = null,
         ) {
@@ -391,13 +404,12 @@ private fun <T> OptionSetting(
                 Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .padding(horizontal = 8.dp, vertical = 12.dp),
+                    .padding(horizontal = 12.dp, vertical = 16.dp),
             ) {
                 Text(
                     title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                 )
                 values.forEach { value ->
                     val isSelected = value == selected
@@ -406,15 +418,23 @@ private fun <T> OptionSetting(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(SketchShape)
+                            .background(
+                                if (isSelected) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    Color.Transparent
+                                },
+                            )
                             .clickable {
                                 onSelect(value)
                                 open = false
                             }
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
                     ) {
                         Text(
                             label(value),
                             style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                             color = if (isSelected) {
                                 MaterialTheme.colorScheme.primary
                             } else {
@@ -427,12 +447,12 @@ private fun <T> OptionSetting(
                                 painter = painterResource(R.drawable.ic_check),
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp),
+                                modifier = Modifier.size(22.dp),
                             )
                         }
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
             }
         }
     }
@@ -451,25 +471,32 @@ private fun SwitchSetting(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onCheckedChange(!checked) }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 18.dp, vertical = 14.dp),
     ) {
         if (iconRes != null) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .padding(end = 12.dp)
-                    .size(20.dp),
-            )
+                    .padding(end = 14.dp)
+                    .size(40.dp)
+                    .clip(SketchShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+            ) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
         Column(Modifier.weight(1f).padding(end = 12.dp)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Text(
                 summary,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier.padding(top = 3.dp),
             )
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange)

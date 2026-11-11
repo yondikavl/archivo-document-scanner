@@ -153,3 +153,29 @@ data class LibraryFileEntity(
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "opened_at") val openedAt: Long,
 )
+
+@Entity(
+    tableName = "pdf_annotations",
+    foreignKeys = [
+        ForeignKey(
+            entity = LibraryFileEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["library_file_id"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index("library_file_id"), Index(value = ["library_file_id", "page_index"])],
+)
+data class PdfAnnotationEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(name = "library_file_id") val libraryFileId: Long,
+    @ColumnInfo(name = "page_index") val pageIndex: Int,
+    val type: String,
+    val left: Float,
+    val top: Float,
+    val right: Float,
+    val bottom: Float,
+    val color: Long,
+    val text: String?,
+    @ColumnInfo(name = "created_at") val createdAt: Long,
+)

@@ -22,6 +22,9 @@ interface LibraryFileDao {
     @Query("UPDATE library_files SET opened_at = :openedAt WHERE id = :id")
     suspend fun touch(id: Long, openedAt: Long)
 
+    @Query("UPDATE library_files SET title = :title WHERE id = :id")
+    suspend fun rename(id: Long, title: String)
+
     @Query("DELETE FROM library_files WHERE id = :id")
     suspend fun delete(id: Long)
 }

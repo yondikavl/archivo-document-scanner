@@ -217,6 +217,10 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun renameLibraryFile(id: Long, title: String) = viewModelScope.launch {
+        libraryRepository.rename(id, title)
+    }
+
     fun deleteLibraryFile(id: Long) = viewModelScope.launch { libraryRepository.delete(id) }
 
     private fun launchWithSelection(block: suspend (List<Long>) -> Unit) {

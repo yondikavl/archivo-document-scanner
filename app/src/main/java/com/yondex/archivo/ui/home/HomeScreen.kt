@@ -37,7 +37,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
-import androidx.compose.material.icons.automirrored.sharp.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.sharp.Sort
 import androidx.compose.material.icons.sharp.CallMerge
 import androidx.compose.material.icons.sharp.Close
@@ -69,6 +68,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -97,6 +97,7 @@ import com.yondex.archivo.ui.components.SketchIconButton
 import com.yondex.archivo.ui.components.SketchChipGap
 import com.yondex.archivo.ui.components.SketchItemGap
 import com.yondex.archivo.ui.components.SketchShape
+import com.yondex.archivo.ui.components.SketchShapeLarge
 import com.yondex.archivo.ui.components.TagDot
 import com.yondex.archivo.ui.components.TagPickerDialog
 import com.yondex.archivo.ui.components.TextInputDialog
@@ -111,6 +112,7 @@ private sealed interface HomeDialog {
     data object MoveDocuments : HomeDialog
     data object TagDocuments : HomeDialog
     data object DeleteDocuments : HomeDialog
+    data class RenameLibraryFile(val file: LibraryFile) : HomeDialog
     data class DeleteLibraryFile(val file: LibraryFile) : HomeDialog
 }
 
@@ -197,9 +199,9 @@ fun HomeScreen(
         val showMoreDocuments = isAllTab && state.documents.size > ALL_PREVIEW_LIMIT
         LazyVerticalGrid(
                 columns = if (isGrid) GridCells.Adaptive(156.dp) else GridCells.Fixed(1),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp),
                 horizontalArrangement = Arrangement.spacedBy(SketchItemGap),
-                verticalArrangement = Arrangement.spacedBy(SketchItemGap),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.fillMaxSize().padding(padding),
             ) {
                 if (onBack == null && !state.isSelecting) {
@@ -212,13 +214,13 @@ fun HomeScreen(
                         )
                     }
                     fullWidthItem("search") {
-                        SearchEntry(onClick = onSearch, modifier = Modifier.padding(top = 4.dp, bottom = SketchItemGap))
+                        SearchEntry(onClick = onSearch, modifier = Modifier.padding(top = 2.dp))
                     }
                     fullWidthItem("categories") {
                         CategoryRow(
                             selected = state.filter,
                             onSelect = viewModel::setFilter,
-                            modifier = Modifier.padding(bottom = SketchItemGap),
+                            modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
                         )
                     }
                     state.recentLibrary?.let { recent ->
@@ -330,7 +332,26 @@ fun HomeScreen(
                                 onDismissRequest = { libraryMenu = null },
                             ) {
                                 DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.action_rename)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_rename),
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    onClick = {
+                                        dialog = HomeDialog.RenameLibraryFile(file)
+                                        libraryMenu = null
+                                    },
+                                )
+                                DropdownMenuItem(
                                     text = { Text(stringResource(R.string.action_delete)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_delete),
+                                            contentDescription = null,
+                                        )
+                                    },
                                     onClick = {
                                         dialog = HomeDialog.DeleteLibraryFile(file)
                                         libraryMenu = null
@@ -446,6 +467,13 @@ fun HomeScreen(
             onDismiss = { dialog = null },
             onConfirm = { viewModel.deleteSelected(); dialog = null },
         )
+        is HomeDialog.RenameLibraryFile -> TextInputDialog(
+            title = stringResource(R.string.rename_library_file),
+            label = stringResource(R.string.file_name),
+            initialValue = current.file.title,
+            onDismiss = { dialog = null },
+            onConfirm = { viewModel.renameLibraryFile(current.file.id, it); dialog = null },
+        )
         is HomeDialog.DeleteLibraryFile -> ConfirmDialog(
             title = stringResource(R.string.delete_library_file_title),
             message = stringResource(R.string.delete_library_file_message, current.file.title),
@@ -477,16 +505,17 @@ private fun GreetingHeader(
     )
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 10.dp),
     ) {
         Column(Modifier.weight(1f)) {
             Text(
                 greeting,
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.displaySmall,
             )
+            Spacer(Modifier.height(6.dp))
             Text(
                 stringResource(R.string.greeting_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -494,12 +523,15 @@ private fun GreetingHeader(
             iconRes = R.drawable.ic_tag,
             contentDescription = stringResource(R.string.manage_tags),
             onClick = onManageTags,
+            size = 48.dp,
         )
         Spacer(Modifier.width(SketchChipGap))
         SketchIconButton(
             iconRes = R.drawable.ic_upload,
             contentDescription = stringResource(R.string.import_file),
             onClick = onImport,
+            size = 48.dp,
+            ink = MaterialTheme.colorScheme.primaryContainer,
         )
     }
 }
@@ -513,12 +545,13 @@ private fun SearchEntry(onClick: () -> Unit, modifier: Modifier = Modifier) {
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_search),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(22.dp),
             )
             Spacer(Modifier.width(12.dp))
             Text(
@@ -533,52 +566,53 @@ private fun SearchEntry(onClick: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 private fun CategoryRow(selected: HomeFilter, onSelect: (HomeFilter) -> Unit, modifier: Modifier = Modifier) {
     val items = listOf(
-        HomeFilter.ALL to R.string.filter_all,
-        HomeFilter.SCANS to R.string.filter_scans,
-        HomeFilter.PDF to R.string.filter_pdf,
+        Triple(HomeFilter.ALL, R.string.filter_all, R.drawable.ic_home),
+        Triple(HomeFilter.SCANS, R.string.filter_scans, R.drawable.ic_scanner),
+        Triple(HomeFilter.PDF, R.string.filter_pdf, R.drawable.ic_document),
     )
-    val shape = SketchShape
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(SketchItemGap), modifier = modifier) {
-        items(items, key = { it.first.name }) { (filter, label) ->
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(SketchItemGap),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        items.forEach { (filter, label, iconRes) ->
             val active = filter == selected
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Surface(
-                    onClick = { onSelect(filter) },
-                    shape = shape,
-                    color = if (active) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.surfaceContainerHigh
-                    },
-                    contentColor = if (active) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
-                    shadowElevation = 0.dp,
-                    tonalElevation = 0.dp,
-                    modifier = Modifier.size(64.dp),
+            Surface(
+                onClick = { onSelect(filter) },
+                shape = SketchShape,
+                color = if (active) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.surface
+                },
+                contentColor = if (active) {
+                    MaterialTheme.colorScheme.onPrimary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                shadowElevation = 0.dp,
+                tonalElevation = 0.dp,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(96.dp),
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
                 ) {
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                            Icon(
-                                painter = painterResource(
-                                    when (filter) {
-                                        HomeFilter.ALL -> R.drawable.ic_home
-                                        HomeFilter.SCANS -> R.drawable.ic_scanner
-                                        HomeFilter.PDF -> R.drawable.ic_document
-                                    },
-                                ),
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                            )
-                        }
+                    Icon(
+                        painter = painterResource(iconRes),
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        stringResource(label),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                        maxLines = 1,
+                    )
                 }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    stringResource(label),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         }
     }
@@ -588,20 +622,29 @@ private fun CategoryRow(selected: HomeFilter, onSelect: (HomeFilter) -> Unit, mo
 private fun RecentlyAddedCard(file: LibraryFile, onClick: () -> Unit) {
     SketchCard(
         onClick = onClick,
+        shape = SketchShapeLarge,
         paper = MaterialTheme.colorScheme.primary,
         selected = false,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp),
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_document),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(28.dp),
-            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(SketchShape)
+                    .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.18f)),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_document),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(26.dp),
+                )
+            }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(
@@ -609,18 +652,22 @@ private fun RecentlyAddedCard(file: LibraryFile, onClick: () -> Unit) {
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onPrimary,
                 )
+                Spacer(Modifier.height(2.dp))
                 Text(
                     file.title,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
                 )
             }
             Icon(
-                Icons.AutoMirrored.Sharp.KeyboardArrowRight,
+                painter = painterResource(R.drawable.ic_arrow_down),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier
+                    .size(22.dp)
+                    .graphicsLayer { rotationZ = -90f },
             )
         }
     }
@@ -636,18 +683,19 @@ private fun LibraryFileRow(
 ) {
     SketchCard(
         selected = selected,
+        shape = SketchShapeLarge,
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
         ) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(52.dp)
                     .clip(SketchShape)
                     .background(MaterialTheme.colorScheme.primaryContainer),
             ) {
@@ -655,13 +703,14 @@ private fun LibraryFileRow(
                     painter = painterResource(R.drawable.ic_document),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp),
                 )
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(
                     file.title,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -688,11 +737,11 @@ private fun SectionHeader(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = SketchItemGap, bottom = 6.dp),
+            .padding(top = 10.dp, bottom = 4.dp),
     ) {
         Text(
             text,
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )

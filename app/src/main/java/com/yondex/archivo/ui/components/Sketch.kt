@@ -166,12 +166,11 @@ fun SketchIconButton(
     shape: Shape = SketchShape,
     ink: Color = Color.Transparent,
 ) {
-    @Suppress("UNUSED_VARIABLE")
-    val unusedInk = ink
+    val accented = ink != Color.Transparent
     Surface(
         onClick = onClick,
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = if (accented) ink else MaterialTheme.colorScheme.surface,
         shadowElevation = 0.dp,
         tonalElevation = 0.dp,
         modifier = modifier.size(size),
@@ -180,7 +179,11 @@ fun SketchIconButton(
             Icon(
                 painter = painter,
                 contentDescription = contentDescription,
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = if (accented) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
                 modifier = Modifier.size(22.dp),
             )
         }
@@ -328,7 +331,7 @@ fun SketchBottomBar(
 ) {
     Surface(
         shape = SketchShapeTop,
-        color = MaterialTheme.colorScheme.background,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 0.dp,
         tonalElevation = 0.dp,
         modifier = modifier.fillMaxWidth(),
@@ -336,7 +339,7 @@ fun SketchBottomBar(
         Row(
             Modifier
                 .fillMaxWidth()
-                .height(68.dp)
+                .height(72.dp)
                 .padding(horizontal = SketchSectionGap, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
             verticalAlignment = Alignment.CenterVertically,
@@ -379,12 +382,12 @@ fun RowScope.SketchBottomNavItem(
             painter = painterResource(iconRes),
             contentDescription = label,
             tint = contentColor,
-            modifier = Modifier.size(22.dp),
+            modifier = Modifier.size(24.dp),
         )
-        Spacer(Modifier.height(2.dp))
+        Spacer(Modifier.height(4.dp))
         Text(
             label,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelMedium,
             color = contentColor,
             maxLines = 1,
             softWrap = false,

@@ -57,6 +57,12 @@ class LibraryRepository @Inject constructor(
 
     suspend fun touch(id: Long) = dao.touch(id, System.currentTimeMillis())
 
+    suspend fun rename(id: Long, title: String) {
+        val cleaned = title.trim()
+        if (cleaned.isEmpty()) return
+        dao.rename(id, cleaned)
+    }
+
     suspend fun delete(id: Long) = withContext(Dispatchers.IO) {
         val entity = dao.get(id) ?: return@withContext
         storage.deleteLibraryFile(entity.path)

@@ -21,6 +21,8 @@
     <string name="action_settings">Pengaturan</string>
     <string name="action_copy">Salin</string>
     <string name="action_select_all">Pilih semua</string>
+    <string name="action_undo">Urungkan</string>
+    <string name="action_redo">Ulangi</string>
     <string name="cd_selected">Dipilih</string>
     <string name="home_label">Beranda</string>
     <string name="nav_home">Beranda</string>
@@ -57,6 +59,18 @@
     <string name="reader_open_failed">File tidak dapat dibuka.</string>
     <string name="delete_library_file_title">Hapus file?</string>
     <string name="delete_library_file_message">\"%1$s\" akan dihapus dari Archivo.</string>
+    <string name="rename_library_file">Ganti nama file</string>
+    <string name="file_name">Nama file</string>
+    <string name="pdf_tool_view">Lihat</string>
+    <string name="pdf_tool_highlight">Sorot</string>
+    <string name="pdf_tool_comment">Komentar</string>
+    <string name="pdf_add_comment">Tambah komentar</string>
+    <string name="pdf_edit_comment">Edit komentar</string>
+    <string name="pdf_comment_label">Komentar</string>
+    <string name="pdf_delete_annotation">Hapus anotasi?</string>
+    <string name="pdf_delete_annotation_message">Sorotan atau komentar ini akan dihapus.</string>
+    <string name="pdf_highlight_hint">Geser di halaman untuk menyorot</string>
+    <string name="pdf_comment_hint">Ketuk halaman untuk menambah komentar</string>
     <string name="section_folders">Folder</string>
     <string name="section_documents">Dokumen</string>
     <string name="section_documents_tagged">Dokumen dengan tag terpilih</string>
