@@ -19,9 +19,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Add
-import androidx.compose.material.icons.sharp.Check
 import androidx.compose.material.icons.sharp.Folder
-import androidx.compose.material.icons.sharp.Home
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -42,6 +40,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
@@ -161,13 +160,22 @@ private fun FolderRow(name: String, depth: Int, isRoot: Boolean, selected: Boole
             .padding(start = (depth * 16).dp, top = 12.dp, bottom = 12.dp),
     ) {
         if (isRoot) {
-            Icon(Icons.Sharp.Home, contentDescription = null)
+            Icon(
+                painter = painterResource(R.drawable.ic_home),
+                contentDescription = null,
+            )
         } else {
             Icon(Icons.Sharp.Folder, contentDescription = null)
         }
         Spacer(Modifier.width(12.dp))
         Text(name, modifier = Modifier.weight(1f))
-        if (selected) Icon(Icons.Sharp.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        if (selected) {
+            Icon(
+                painter = painterResource(R.drawable.ic_check),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
 }
 
@@ -300,7 +308,13 @@ fun TagEditorDialog(
                                     .background(Color(option), CircleShape)
                                     .clickable { color = option },
                             ) {
-                                if (option == color) Icon(Icons.Sharp.Check, contentDescription = null, tint = Color.White)
+                                if (option == color) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_check),
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                    )
+                                }
                             }
                         }
                     }

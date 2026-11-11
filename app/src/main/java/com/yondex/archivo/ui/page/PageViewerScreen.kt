@@ -23,15 +23,10 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.annotation.DrawableRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
 import androidx.compose.material.icons.sharp.ContentCopy
-import androidx.compose.material.icons.sharp.Crop
-import androidx.compose.material.icons.sharp.Delete
-import androidx.compose.material.icons.sharp.Edit
-import androidx.compose.material.icons.automirrored.sharp.RotateRight
-import androidx.compose.material.icons.sharp.Share
-import androidx.compose.material.icons.automirrored.sharp.TextSnippet
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -60,8 +55,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -256,23 +254,23 @@ private fun PageActionBar(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 PageAction(
-                    icon = Icons.AutoMirrored.Sharp.TextSnippet,
+                    iconRes = R.drawable.ic_ocr,
                     label = stringResource(R.string.action_text),
                     onClick = onText,
                 )
                 PageAction(
-                    icon = Icons.Sharp.Crop,
+                    iconRes = R.drawable.ic_crop,
                     label = stringResource(R.string.action_crop),
                     onClick = onCrop,
                 )
                 PageAction(
-                    icon = Icons.AutoMirrored.Sharp.RotateRight,
+                    iconRes = R.drawable.ic_rotate,
                     label = stringResource(R.string.action_rotate),
                     enabled = !busy,
                     onClick = onRotate,
                 )
                 PageAction(
-                    icon = Icons.Sharp.Delete,
+                    iconRes = R.drawable.ic_delete,
                     label = stringResource(R.string.action_delete),
                     onClick = onDelete,
                 )
@@ -288,9 +286,39 @@ private fun PageAction(
     onClick: () -> Unit,
     enabled: Boolean = true,
 ) {
+    PageAction(
+        painter = rememberVectorPainter(icon),
+        label = label,
+        onClick = onClick,
+        enabled = enabled,
+    )
+}
+
+@Composable
+private fun PageAction(
+    @DrawableRes iconRes: Int,
+    label: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+) {
+    PageAction(
+        painter = painterResource(iconRes),
+        label = label,
+        onClick = onClick,
+        enabled = enabled,
+    )
+}
+
+@Composable
+private fun PageAction(
+    painter: Painter,
+    label: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(44.dp)) {
-            Icon(icon, contentDescription = label)
+            Icon(painter = painter, contentDescription = label)
         }
         Text(
             label,
@@ -343,12 +371,18 @@ private fun OcrTextSheet(
                         Icon(Icons.Sharp.ContentCopy, contentDescription = stringResource(R.string.action_text))
                     }
                     IconButton(onClick = { onShare(text) }) {
-                        Icon(Icons.Sharp.Share, contentDescription = stringResource(R.string.action_share))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_share),
+                            contentDescription = stringResource(R.string.action_share),
+                        )
                     }
                 }
                 if (!editing && page.ocrStatus == OcrStatus.DONE) {
                     IconButton(onClick = { editing = true }) {
-                        Icon(Icons.Sharp.Edit, contentDescription = stringResource(R.string.action_rename))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_rename),
+                            contentDescription = stringResource(R.string.action_rename),
+                        )
                     }
                 }
             }

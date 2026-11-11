@@ -1,13 +1,10 @@
 package com.yondex.archivo.ui.settings
 
 import android.os.Build
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,7 +13,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -25,37 +22,36 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
-import androidx.compose.material.icons.sharp.Contrast
-import androidx.compose.material.icons.sharp.DarkMode
-import androidx.compose.material.icons.sharp.DocumentScanner
-import androidx.compose.material.icons.sharp.Info
-import androidx.compose.material.icons.sharp.Language
-import androidx.compose.material.icons.sharp.Palette
-import androidx.compose.material.icons.sharp.PictureAsPdf
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -69,12 +65,8 @@ import com.yondex.archivo.domain.model.ExportQuality
 import com.yondex.archivo.domain.model.PageFilter
 import com.yondex.archivo.domain.model.PdfPageSize
 import com.yondex.archivo.domain.model.ThemeMode
-import com.yondex.archivo.ui.components.SketchChip
-import com.yondex.archivo.ui.components.SketchChipGap
-import com.yondex.archivo.ui.components.SketchInk
 import com.yondex.archivo.ui.components.SketchSectionGap
-import com.yondex.archivo.ui.components.SketchShadowOffset
-import com.yondex.archivo.ui.components.SketchStroke
+import com.yondex.archivo.ui.components.SketchShape
 import com.yondex.archivo.ui.label
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -139,20 +131,20 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
         ) {
             SettingsGroup(
                 title = stringResource(R.string.section_appearance),
-                icon = Icons.Sharp.Palette,
+                iconRes = R.drawable.ic_appearance,
             ) {
-                SegmentedSetting(
+                OptionSetting(
                     title = stringResource(R.string.language),
-                    icon = Icons.Sharp.Language,
+                    iconRes = R.drawable.ic_languange,
                     values = AppLanguage.entries,
                     selected = settings.appLanguage,
                     label = { it.label() },
                     onSelect = viewModel::setAppLanguage,
                 )
                 SettingsDivider()
-                SegmentedSetting(
+                OptionSetting(
                     title = stringResource(R.string.theme),
-                    icon = Icons.Sharp.DarkMode,
+                    iconRes = R.drawable.ic_theme,
                     values = ThemeMode.entries,
                     selected = settings.themeMode,
                     label = { it.label() },
@@ -163,7 +155,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                     SwitchSetting(
                         title = stringResource(R.string.dynamic_color),
                         summary = stringResource(R.string.dynamic_color_summary),
-                        icon = Icons.Sharp.Contrast,
+                        iconRes = R.drawable.ic_dynamic_color,
                         checked = settings.dynamicColor,
                         onCheckedChange = viewModel::setDynamicColor,
                     )
@@ -172,9 +164,9 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
 
             SettingsGroup(
                 title = stringResource(R.string.section_scan),
-                icon = Icons.Sharp.DocumentScanner,
+                iconRes = R.drawable.ic_scanner,
             ) {
-                ChipSetting(
+                OptionSetting(
                     title = stringResource(R.string.default_filter),
                     values = PageFilter.entries,
                     selected = settings.defaultFilter,
@@ -185,6 +177,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 SwitchSetting(
                     title = stringResource(R.string.auto_ocr),
                     summary = stringResource(R.string.auto_ocr_summary),
+                    iconRes = R.drawable.ic_ocr,
                     checked = settings.autoOcr,
                     onCheckedChange = viewModel::setAutoOcr,
                 )
@@ -192,9 +185,9 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
 
             SettingsGroup(
                 title = stringResource(R.string.section_export_pdf),
-                icon = Icons.Sharp.PictureAsPdf,
+                iconRes = R.drawable.ic_document,
             ) {
-                ChipSetting(
+                OptionSetting(
                     title = stringResource(R.string.page_size),
                     values = PdfPageSize.entries,
                     selected = settings.pdfPageSize,
@@ -202,7 +195,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                     onSelect = viewModel::setPdfPageSize,
                 )
                 SettingsDivider()
-                ChipSetting(
+                OptionSetting(
                     title = stringResource(R.string.quality),
                     values = ExportQuality.entries,
                     selected = settings.exportQuality,
@@ -213,13 +206,14 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
 
             SettingsGroup(
                 title = stringResource(R.string.section_about),
-                icon = Icons.Sharp.Info,
+                iconRes = R.drawable.ic_about,
+                framed = false,
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 20.dp, horizontal = 16.dp),
+                        .padding(vertical = 12.dp, horizontal = 16.dp),
                 ) {
                     Image(
                         painter = painterResource(R.drawable.logo_archivo),
@@ -227,7 +221,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .size(72.dp)
-                            .clip(RectangleShape),
+                            .clip(SketchShape),
                     )
                     Text(
                         stringResource(R.string.app_name),
@@ -252,10 +246,40 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
 @Composable
 private fun SettingsGroup(
     title: String,
-    icon: ImageVector,
+    @DrawableRes iconRes: Int,
+    framed: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val shape = MaterialTheme.shapes.large
+    SettingsGroup(
+        title = title,
+        painter = painterResource(iconRes),
+        framed = framed,
+        content = content,
+    )
+}
+
+@Composable
+private fun SettingsGroup(
+    title: String,
+    icon: ImageVector,
+    framed: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    SettingsGroup(
+        title = title,
+        painter = rememberVectorPainter(icon),
+        framed = framed,
+        content = content,
+    )
+}
+
+@Composable
+private fun SettingsGroup(
+    title: String,
+    painter: Painter,
+    framed: Boolean = true,
+    content: @Composable () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -263,7 +287,7 @@ private fun SettingsGroup(
             modifier = Modifier.padding(start = 4.dp, end = 4.dp),
         ) {
             Icon(
-                icon,
+                painter = painter,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(18.dp),
@@ -275,31 +299,18 @@ private fun SettingsGroup(
                 fontWeight = FontWeight.SemiBold,
             )
         }
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .padding(end = SketchShadowOffset, bottom = SketchShadowOffset),
-        ) {
-            Box(
-                Modifier
-                    .matchParentSize()
-                    .offset(SketchShadowOffset, SketchShadowOffset)
-                    .clip(shape)
-                    .background(SketchInk)
-                    .zIndex(0f),
-            )
+        if (framed) {
             Surface(
-                shape = shape,
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
+                shape = SketchShape,
+                color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp,
                 shadowElevation = 0.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .zIndex(1f)
-                    .border(SketchStroke, SketchInk, shape),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(content = { content() })
             }
+        } else {
+            content()
         }
     }
 }
@@ -308,83 +319,120 @@ private fun SettingsGroup(
 private fun SettingsDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(horizontal = 16.dp),
-        thickness = 2.dp,
-        color = SketchInk,
+        thickness = 1.dp,
+        color = MaterialTheme.colorScheme.outlineVariant,
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun <T> SegmentedSetting(
+private fun <T> OptionSetting(
     title: String,
     values: List<T>,
     selected: T,
     label: @Composable (T) -> String,
     onSelect: (T) -> Unit,
-    icon: ImageVector? = null,
+    @DrawableRes iconRes: Int? = null,
 ) {
-    Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            if (icon != null) {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            Text(title, style = MaterialTheme.typography.bodyLarge)
+    var open by remember { mutableStateOf(false) }
+    val selectedLabel = label(selected)
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { open = true }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        if (iconRes != null) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .padding(end = 12.dp)
+                    .size(20.dp),
+            )
         }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
+        Text(
+            title,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            selectedLabel,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 12.dp),
+        )
+        Icon(
+            painter = painterResource(R.drawable.ic_arrow_down),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
-                .padding(top = 12.dp)
-                .horizontalScroll(rememberScrollState()),
+                .padding(start = 4.dp)
+                .size(20.dp),
+        )
+    }
+
+    if (open) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { open = false },
+            sheetState = sheetState,
+            shape = SketchShape,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            tonalElevation = 0.dp,
+            dragHandle = null,
         ) {
-            values.forEach { value ->
-                SketchChip(
-                    selected = value == selected,
-                    onClick = { onSelect(value) },
-                    label = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
+            ) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+                values.forEach { value ->
+                    val isSelected = value == selected
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(SketchShape)
+                            .clickable {
+                                onSelect(value)
+                                open = false
+                            }
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                    ) {
                         Text(
                             label(value),
-                            maxLines = 1,
-                            style = MaterialTheme.typography.labelLarge,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (isSelected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                            modifier = Modifier.weight(1f),
                         )
-                    },
-                    shadowed = false,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun <T> ChipSetting(
-    title: String,
-    values: List<T>,
-    selected: T,
-    label: @Composable (T) -> String,
-    onSelect: (T) -> Unit,
-) {
-    Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
-        Text(title, style = MaterialTheme.typography.bodyLarge)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
-            modifier = Modifier
-                .padding(top = 12.dp)
-                .horizontalScroll(rememberScrollState()),
-        ) {
-            values.forEach { value ->
-                SketchChip(
-                    selected = value == selected,
-                    onClick = { onSelect(value) },
-                    label = { Text(label(value)) },
-                    // Dense option rows: border-only so hard shadows don't cover neighbors.
-                    shadowed = false,
-                )
+                        if (isSelected) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_check),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
             }
         }
     }
@@ -396,7 +444,7 @@ private fun SwitchSetting(
     summary: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    icon: ImageVector? = null,
+    @DrawableRes iconRes: Int? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -405,9 +453,9 @@ private fun SwitchSetting(
             .clickable { onCheckedChange(!checked) }
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        if (icon != null) {
+        if (iconRes != null) {
             Icon(
-                icon,
+                painter = painterResource(iconRes),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier

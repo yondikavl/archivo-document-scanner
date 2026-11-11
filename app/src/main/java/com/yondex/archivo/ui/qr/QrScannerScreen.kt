@@ -36,8 +36,6 @@ import androidx.compose.material.icons.sharp.ContentCopy
 import androidx.compose.material.icons.sharp.FlashOff
 import androidx.compose.material.icons.sharp.FlashOn
 import androidx.compose.material.icons.sharp.Link
-import androidx.compose.material.icons.sharp.QrCodeScanner
-import androidx.compose.material.icons.sharp.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +56,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -286,7 +285,10 @@ private fun ResultSheet(
     ) {
         Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Sharp.QrCodeScanner, contentDescription = null)
+                Icon(
+                    painter = painterResource(R.drawable.ic_qrcode),
+                    contentDescription = null,
+                )
                 Spacer(Modifier.width(10.dp))
                 Text(
                     stringResource(R.string.qr_result_title),
@@ -315,7 +317,11 @@ private fun ResultSheet(
                     Text(stringResource(R.string.action_copy))
                 }
                 SketchOutlinedButton(onClick = onShare, modifier = Modifier.weight(1f), fillWidth = true) {
-                    Icon(Icons.Sharp.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(
+                        painter = painterResource(R.drawable.ic_share),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
                     Spacer(Modifier.width(6.dp))
                     Text(stringResource(R.string.action_share))
                 }
@@ -349,7 +355,12 @@ private fun PermissionPane(onRequest: () -> Unit, onClose: () -> Unit) {
             .fillMaxSize()
             .padding(32.dp),
     ) {
-        Icon(Icons.Sharp.QrCodeScanner, contentDescription = null, tint = Color.White, modifier = Modifier.size(64.dp))
+        Icon(
+            painter = painterResource(R.drawable.ic_qrcode),
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(64.dp),
+        )
         Spacer(Modifier.height(16.dp))
         Text(
             stringResource(R.string.camera_permission_title),

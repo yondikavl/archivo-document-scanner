@@ -9,7 +9,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -42,19 +41,12 @@ import androidx.compose.material.icons.automirrored.sharp.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.sharp.Sort
 import androidx.compose.material.icons.sharp.CallMerge
 import androidx.compose.material.icons.sharp.Close
-import androidx.compose.material.icons.sharp.DocumentScanner
 import androidx.compose.material.icons.sharp.MoreVert
-import androidx.compose.material.icons.sharp.PictureAsPdf
-import androidx.compose.material.icons.sharp.Search
 import androidx.compose.material.icons.sharp.SelectAll
 import androidx.compose.material.icons.sharp.CreateNewFolder
-import androidx.compose.material.icons.sharp.Delete
-import androidx.compose.material.icons.automirrored.sharp.DriveFileMove
 import androidx.compose.material.icons.sharp.Folder as FolderIcon
 import androidx.compose.material.icons.sharp.GridView
-import androidx.compose.material.icons.automirrored.sharp.Label
 import androidx.compose.material.icons.automirrored.sharp.ViewList
-import androidx.compose.material.icons.sharp.UploadFile
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -78,6 +70,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -102,11 +95,8 @@ import com.yondex.archivo.ui.components.SketchChip
 import com.yondex.archivo.ui.components.SketchDropdownMenu
 import com.yondex.archivo.ui.components.SketchIconButton
 import com.yondex.archivo.ui.components.SketchChipGap
-import com.yondex.archivo.ui.components.SketchInk
 import com.yondex.archivo.ui.components.SketchItemGap
-import com.yondex.archivo.ui.components.SketchShadowOffset
-import com.yondex.archivo.ui.components.SketchStroke
-import com.yondex.archivo.ui.components.SketchStrokeSelected
+import com.yondex.archivo.ui.components.SketchShape
 import com.yondex.archivo.ui.components.TagDot
 import com.yondex.archivo.ui.components.TagPickerDialog
 import com.yondex.archivo.ui.components.TextInputDialog
@@ -264,7 +254,7 @@ fun HomeScreen(
                             }
                             IconButton(onClick = onManageTags) {
                                 Icon(
-                                    Icons.AutoMirrored.Sharp.Label,
+                                    painter = painterResource(R.drawable.ic_tag),
                                     contentDescription = stringResource(R.string.manage_tags),
                                 )
                             }
@@ -393,7 +383,7 @@ fun HomeScreen(
                 } else if (!state.isLoading && state.folders.isEmpty() && previewFiles.isEmpty()) {
                     fullWidthItem("empty") {
                         EmptyState(
-                            icon = Icons.Sharp.UploadFile,
+                            iconRes = R.drawable.ic_upload,
                             title = stringResource(
                                 if (state.tagFilter.isNotEmpty()) R.string.empty_no_documents_filter
                                 else R.string.empty_home_title,
@@ -501,13 +491,13 @@ private fun GreetingHeader(
             )
         }
         SketchIconButton(
-            icon = Icons.AutoMirrored.Sharp.Label,
+            iconRes = R.drawable.ic_tag,
             contentDescription = stringResource(R.string.manage_tags),
             onClick = onManageTags,
         )
         Spacer(Modifier.width(SketchChipGap))
         SketchIconButton(
-            icon = Icons.Sharp.UploadFile,
+            iconRes = R.drawable.ic_upload,
             contentDescription = stringResource(R.string.import_file),
             onClick = onImport,
         )
@@ -518,14 +508,18 @@ private fun GreetingHeader(
 private fun SearchEntry(onClick: () -> Unit, modifier: Modifier = Modifier) {
     SketchCard(
         onClick = onClick,
-        shape = MaterialTheme.shapes.medium,
+        shape = SketchShape,
         modifier = modifier.fillMaxWidth(),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
         ) {
-            Icon(Icons.Sharp.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(
+                painter = painterResource(R.drawable.ic_search),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Spacer(Modifier.width(12.dp))
             Text(
                 stringResource(R.string.search_documents_hint),
@@ -543,50 +537,41 @@ private fun CategoryRow(selected: HomeFilter, onSelect: (HomeFilter) -> Unit, mo
         HomeFilter.SCANS to R.string.filter_scans,
         HomeFilter.PDF to R.string.filter_pdf,
     )
-    val shape = RectangleShape
+    val shape = SketchShape
     LazyRow(horizontalArrangement = Arrangement.spacedBy(SketchItemGap), modifier = modifier) {
         items(items, key = { it.first.name }) { (filter, label) ->
             val active = filter == selected
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(Modifier.size(64.dp + SketchShadowOffset)) {
-                    Box(
-                        Modifier
-                            .align(Alignment.BottomEnd)
-                            .size(64.dp)
-                            .background(SketchInk, shape),
-                    )
-                    Surface(
-                        onClick = { onSelect(filter) },
-                        shape = shape,
-                        color = if (active) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerLowest
-                        },
-                        contentColor = if (active) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
-                        },
-                        shadowElevation = 0.dp,
-                        tonalElevation = 0.dp,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .size(64.dp)
-                            .border(if (active) SketchStrokeSelected else SketchStroke, SketchInk, shape),
-                    ) {
+                Surface(
+                    onClick = { onSelect(filter) },
+                    shape = shape,
+                    color = if (active) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                    },
+                    contentColor = if (active) {
+                        MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                    shadowElevation = 0.dp,
+                    tonalElevation = 0.dp,
+                    modifier = Modifier.size(64.dp),
+                ) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                            when (filter) {
-                                HomeFilter.ALL -> Icon(
-                                    Icons.Sharp.FolderIcon,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(28.dp),
-                                )
-                                HomeFilter.SCANS -> Icon(Icons.Sharp.DocumentScanner, null, Modifier.size(28.dp))
-                                HomeFilter.PDF -> Icon(Icons.Sharp.PictureAsPdf, null, Modifier.size(28.dp))
-                            }
+                            Icon(
+                                painter = painterResource(
+                                    when (filter) {
+                                        HomeFilter.ALL -> R.drawable.ic_home
+                                        HomeFilter.SCANS -> R.drawable.ic_scanner
+                                        HomeFilter.PDF -> R.drawable.ic_document
+                                    },
+                                ),
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp),
+                            )
                         }
-                    }
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -604,7 +589,6 @@ private fun RecentlyAddedCard(file: LibraryFile, onClick: () -> Unit) {
     SketchCard(
         onClick = onClick,
         paper = MaterialTheme.colorScheme.primary,
-        ink = SketchInk,
         selected = false,
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -613,7 +597,7 @@ private fun RecentlyAddedCard(file: LibraryFile, onClick: () -> Unit) {
             modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp),
         ) {
             Icon(
-                Icons.Sharp.PictureAsPdf,
+                painter = painterResource(R.drawable.ic_document),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(28.dp),
@@ -664,12 +648,11 @@ private fun LibraryFileRow(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(48.dp)
-                    .clip(RectangleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .border(SketchStroke, SketchInk, RectangleShape),
+                    .clip(SketchShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
             ) {
                 Icon(
-                    Icons.Sharp.PictureAsPdf,
+                    painter = painterResource(R.drawable.ic_document),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                 )
@@ -752,7 +735,10 @@ private fun FolderTopBar(
         },
         actions = {
             IconButton(onClick = onSearch) {
-                Icon(Icons.Sharp.Search, contentDescription = stringResource(R.string.action_search))
+                Icon(
+                    painter = painterResource(R.drawable.ic_search),
+                    contentDescription = stringResource(R.string.action_search),
+                )
             }
             IconButton(onClick = onToggleView) {
                 Icon(
@@ -786,7 +772,12 @@ private fun FolderTopBar(
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.manage_tags)) },
-                        leadingIcon = { Icon(Icons.AutoMirrored.Sharp.Label, contentDescription = null) },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_tag),
+                                contentDescription = null,
+                            )
+                        },
                         onClick = { onManageTags(); moreMenu = false },
                     )
                 }
@@ -829,13 +820,22 @@ private fun SelectionTopBar(
                 Icon(Icons.Sharp.CallMerge, contentDescription = stringResource(R.string.merge_action))
             }
             IconButton(onClick = onTag, enabled = hasDocuments) {
-                Icon(Icons.AutoMirrored.Sharp.Label, contentDescription = stringResource(R.string.action_tag))
+                Icon(
+                    painter = painterResource(R.drawable.ic_tag),
+                    contentDescription = stringResource(R.string.action_tag),
+                )
             }
             IconButton(onClick = onMove, enabled = hasDocuments) {
-                Icon(Icons.AutoMirrored.Sharp.DriveFileMove, contentDescription = stringResource(R.string.action_move))
+                Icon(
+                    painter = painterResource(R.drawable.ic_move),
+                    contentDescription = stringResource(R.string.action_move),
+                )
             }
             IconButton(onClick = onDelete, enabled = hasDocuments) {
-                Icon(Icons.Sharp.Delete, contentDescription = stringResource(R.string.action_delete))
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete),
+                    contentDescription = stringResource(R.string.action_delete),
+                )
             }
         },
     )

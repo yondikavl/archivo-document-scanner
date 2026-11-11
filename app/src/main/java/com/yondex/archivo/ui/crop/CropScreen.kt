@@ -13,9 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
-import androidx.compose.material.icons.sharp.Check
 import androidx.compose.material.icons.sharp.AutoFixHigh
-import androidx.compose.material.icons.sharp.CropFree
 import androidx.compose.material.icons.sharp.Edit
 import androidx.compose.material.icons.sharp.Visibility
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -79,7 +78,10 @@ fun CropScreen(
                         CircularProgressIndicator(Modifier.padding(12.dp))
                     } else {
                         IconButton(onClick = viewModel::apply, enabled = state.image != null) {
-                            Icon(Icons.Sharp.Check, contentDescription = stringResource(R.string.action_apply))
+                            Icon(
+                                painter = painterResource(R.drawable.ic_check),
+                                contentDescription = stringResource(R.string.action_apply),
+                            )
                         }
                     }
                 },
@@ -91,7 +93,7 @@ fun CropScreen(
                 val image = state.image
                 when {
                     state.loadFailed -> EmptyState(
-                        icon = Icons.Sharp.CropFree,
+                        iconRes = R.drawable.ic_crop,
                         title = stringResource(R.string.crop_load_error_title),
                         message = stringResource(R.string.crop_load_error_message),
                     )
@@ -142,7 +144,10 @@ fun CropScreen(
                             Text(" ${stringResource(R.string.detect)}")
                         }
                         TextButton(onClick = viewModel::selectFull) {
-                            Icon(Icons.Sharp.CropFree, contentDescription = null)
+                            Icon(
+                                painter = painterResource(R.drawable.ic_crop),
+                                contentDescription = null,
+                            )
                             Text(" ${stringResource(R.string.full_page)}")
                         }
                         TextButton(onClick = { viewModel.setPreview(!state.showPreview) }) {

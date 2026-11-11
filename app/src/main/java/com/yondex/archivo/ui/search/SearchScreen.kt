@@ -15,7 +15,6 @@ import androidx.compose.material.icons.automirrored.sharp.ArrowBack
 import androidx.compose.material.icons.sharp.ArrowDropDown
 import androidx.compose.material.icons.sharp.Close
 import androidx.compose.material.icons.sharp.Folder
-import androidx.compose.material.icons.sharp.SearchOff
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -166,7 +165,7 @@ fun SearchScreen(
             if (state.hasQuery && state.results.isEmpty()) {
                 item {
                     EmptyState(
-                        icon = Icons.Sharp.SearchOff,
+                        iconRes = R.drawable.ic_search,
                         title = stringResource(R.string.search_not_found),
                         message = stringResource(R.string.search_not_found_message, query),
                         modifier = Modifier.padding(top = 48.dp),

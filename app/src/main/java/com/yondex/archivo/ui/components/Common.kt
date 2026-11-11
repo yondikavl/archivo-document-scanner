@@ -2,7 +2,6 @@ package com.yondex.archivo.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,10 +16,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.CheckCircle
-import androidx.compose.material.icons.sharp.Description
 import androidx.compose.material.icons.sharp.Folder as FolderIcon
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,9 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,7 +56,6 @@ fun TagDot(color: Color, modifier: Modifier = Modifier) {
     Box(
         modifier
             .size(10.dp)
-            .border(1.5.dp, SketchInk, CircleShape)
             .background(color, CircleShape),
     )
 }
@@ -64,13 +63,12 @@ fun TagDot(color: Color, modifier: Modifier = Modifier) {
 @Composable
 fun TagLabel(tag: Tag, modifier: Modifier = Modifier) {
     val color = Color(tag.color)
-    val shape = RectangleShape
+    val shape = SketchShape
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .clip(shape)
             .background(color.copy(alpha = 0.16f))
-            .border(SketchStroke, SketchInk, shape)
             .padding(horizontal = 10.dp, vertical = 5.dp),
     ) {
         TagDot(color, Modifier.size(6.dp))
@@ -96,33 +94,49 @@ fun TagRow(tags: List<Tag>, modifier: Modifier = Modifier, max: Int = 3) {
 
 @Composable
 fun EmptyState(icon: ImageVector, title: String, message: String, modifier: Modifier = Modifier) {
+    EmptyState(
+        painter = rememberVectorPainter(icon),
+        title = title,
+        message = message,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun EmptyState(
+    @DrawableRes iconRes: Int,
+    title: String,
+    message: String,
+    modifier: Modifier = Modifier,
+) {
+    EmptyState(
+        painter = painterResource(iconRes),
+        title = title,
+        message = message,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun EmptyState(painter: Painter, title: String, message: String, modifier: Modifier = Modifier) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 40.dp),
     ) {
-        Box(Modifier.size(88.dp + SketchShadowOffset)) {
-            Box(
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(88.dp)
-                    .background(SketchInk, RectangleShape),
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(88.dp)
+                .clip(SketchShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        ) {
+            Icon(
+                painter = painter,
+                contentDescription = null,
+                modifier = Modifier.size(36.dp),
+                tint = MaterialTheme.colorScheme.primary,
             )
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .size(88.dp)
-                    .background(MaterialTheme.colorScheme.surfaceContainerLowest, RectangleShape)
-                    .sketchBorder(RectangleShape, SketchInk, SketchStroke),
-            ) {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            }
         }
         Spacer(Modifier.height(22.dp))
         Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
@@ -151,7 +165,7 @@ fun Thumbnail(path: String?, modifier: Modifier = Modifier) {
             )
         } else {
             Icon(
-                Icons.Sharp.Description,
+                painter = painterResource(R.drawable.ic_document),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
                 modifier = Modifier.size(28.dp),
@@ -166,31 +180,19 @@ private fun SketchFrame(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    val shape = RectangleShape
-    Box(modifier.padding(end = SketchShadowOffset, bottom = SketchShadowOffset)) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .offset(x = SketchShadowOffset, y = SketchShadowOffset)
-                .clip(shape)
-                .background(SketchInk)
-                .zIndex(0f),
-        )
-        Box(
-            Modifier
-                .zIndex(1f)
-                .clip(shape)
-                .background(
-                    if (selected) {
-                        MaterialTheme.colorScheme.tertiaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surfaceContainerLowest
-                    },
-                )
-                .border(if (selected) SketchStrokeSelected else SketchStroke, SketchInk, shape),
-        ) {
-            content()
-        }
+    val shape = SketchShape
+    Box(
+        modifier
+            .clip(shape)
+            .background(
+                if (selected) {
+                    MaterialTheme.colorScheme.secondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surface
+                },
+            ),
+    ) {
+        content()
     }
 }
 
@@ -227,8 +229,8 @@ fun DocumentGridCard(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(10.dp)
-                    .border(1.dp, Color.White.copy(alpha = 0.7f), RectangleShape)
-                    .background(Color.Black.copy(alpha = 0.35f), RectangleShape)
+                    .clip(SketchShape)
+                    .background(Color.Black.copy(alpha = 0.35f))
                     .padding(horizontal = 8.dp, vertical = 3.dp),
             ) {
                 Text(
@@ -286,8 +288,7 @@ fun DocumentListItem(
                     Modifier
                         .width(64.dp)
                         .aspectRatio(0.78f)
-                        .clip(RectangleShape)
-                        .border(SketchStroke, SketchInk, RectangleShape),
+                        .clip(SketchShape),
                 )
                 if (selected) SelectedBadge(Modifier.align(Alignment.Center))
             }
@@ -337,9 +338,8 @@ fun FolderItem(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(46.dp)
-                    .clip(RectangleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .border(SketchStroke, SketchInk, RectangleShape),
+                    .clip(SketchShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
             ) {
                 Icon(
                     Icons.Sharp.FolderIcon,
@@ -368,12 +368,11 @@ fun FolderItem(
 @Composable
 private fun SelectedBadge(modifier: Modifier = Modifier) {
     Icon(
-        Icons.Sharp.CheckCircle,
+        painter = painterResource(R.drawable.ic_check),
         contentDescription = stringResource(R.string.cd_selected),
         tint = MaterialTheme.colorScheme.primary,
         modifier = modifier
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest, CircleShape)
-            .border(1.dp, SketchInk, CircleShape)
+            .background(MaterialTheme.colorScheme.surface, CircleShape)
             .padding(1.dp),
     )
 }

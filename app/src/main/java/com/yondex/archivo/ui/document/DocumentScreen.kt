@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,18 +22,9 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
-import androidx.compose.material.icons.automirrored.sharp.DriveFileMove
-import androidx.compose.material.icons.automirrored.sharp.Label
 import androidx.compose.material.icons.sharp.MoreVert
-import androidx.compose.material.icons.sharp.AddAPhoto
-import androidx.compose.material.icons.sharp.CallSplit
-import androidx.compose.material.icons.sharp.Delete
-import androidx.compose.material.icons.sharp.DocumentScanner
-import androidx.compose.material.icons.sharp.Edit
 import androidx.compose.material.icons.sharp.ErrorOutline
 import androidx.compose.material.icons.sharp.HourglassTop
-import androidx.compose.material.icons.sharp.Share
-import androidx.compose.material.icons.automirrored.sharp.TextSnippet
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -54,8 +46,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -74,6 +69,7 @@ import com.yondex.archivo.ui.components.SketchDropdownMenu
 import com.yondex.archivo.ui.components.SketchExtendedFab
 import com.yondex.archivo.ui.components.SketchInk
 import com.yondex.archivo.ui.components.SketchItemGap
+import com.yondex.archivo.ui.components.SketchShape
 import com.yondex.archivo.ui.components.SketchStroke
 import com.yondex.archivo.ui.components.TagPickerDialog
 import com.yondex.archivo.ui.components.TagRow
@@ -146,30 +142,33 @@ fun DocumentScreen(
                 },
                 actions = {
                     IconButton(onClick = { dialog = DocumentDialog.EXPORT }, enabled = state.pages.isNotEmpty()) {
-                        Icon(Icons.Sharp.Share, contentDescription = stringResource(R.string.action_export))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_share),
+                            contentDescription = stringResource(R.string.action_export),
+                        )
                     }
                     Box {
                         IconButton(onClick = { menuOpen = true }) {
                             Icon(Icons.Sharp.MoreVert, contentDescription = stringResource(R.string.action_more))
                         }
                         SketchDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                            MenuItem(stringResource(R.string.rename_document), Icons.Sharp.Edit) {
+                            MenuItem(stringResource(R.string.rename_document), R.drawable.ic_rename) {
                                 dialog = DocumentDialog.RENAME; menuOpen = false
                             }
-                            MenuItem(stringResource(R.string.action_move), Icons.AutoMirrored.Sharp.DriveFileMove) {
+                            MenuItem(stringResource(R.string.action_move), R.drawable.ic_move) {
                                 dialog = DocumentDialog.MOVE; menuOpen = false
                             }
-                            MenuItem(stringResource(R.string.action_tag), Icons.AutoMirrored.Sharp.Label) {
+                            MenuItem(stringResource(R.string.action_tag), R.drawable.ic_tag) {
                                 dialog = DocumentDialog.TAGS; menuOpen = false
                             }
-                            MenuItem(stringResource(R.string.rerun_ocr), Icons.AutoMirrored.Sharp.TextSnippet) {
+                            MenuItem(stringResource(R.string.rerun_ocr), R.drawable.ic_ocr) {
                                 viewModel.runOcr(); menuOpen = false
                             }
-                            MenuItem(stringResource(R.string.split_action), Icons.Sharp.CallSplit) {
+                            MenuItem(stringResource(R.string.split_action), R.drawable.ic_split) {
                                 menuOpen = false
                                 onSplit(viewModel.documentId)
                             }
-                            MenuItem(stringResource(R.string.action_delete), Icons.Sharp.Delete) {
+                            MenuItem(stringResource(R.string.action_delete), R.drawable.ic_delete) {
                                 dialog = DocumentDialog.DELETE; menuOpen = false
                             }
                         }
@@ -180,7 +179,12 @@ fun DocumentScreen(
         floatingActionButton = {
             SketchExtendedFab(
                 onClick = { onAddPages(viewModel.documentId) },
-                icon = { Icon(Icons.Sharp.AddAPhoto, contentDescription = null) },
+                icon = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_camera),
+                        contentDescription = null,
+                    )
+                },
                 text = { Text(stringResource(R.string.add_pages)) },
             )
         },
@@ -222,7 +226,7 @@ fun DocumentScreen(
             if (state.pages.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     EmptyState(
-                        icon = Icons.Sharp.DocumentScanner,
+                        iconRes = R.drawable.ic_scanner,
                         title = stringResource(R.string.empty_document_title),
                         message = stringResource(R.string.empty_document_message),
                     )
@@ -291,8 +295,26 @@ fun DocumentScreen(
 }
 
 @Composable
-private fun MenuItem(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+private fun MenuItem(text: String, icon: ImageVector, onClick: () -> Unit) {
     DropdownMenuItem(text = { Text(text) }, leadingIcon = { Icon(icon, contentDescription = null) }, onClick = onClick)
+}
+
+@Composable
+private fun MenuItem(
+    text: String,
+    @DrawableRes iconRes: Int,
+    onClick: () -> Unit,
+) {
+    DropdownMenuItem(
+        text = { Text(text) },
+        leadingIcon = {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+            )
+        },
+        onClick = onClick,
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -325,11 +347,9 @@ private fun PageCard(
                     modifier = Modifier.fillMaxSize().clip(RectangleShape),
                 )
                 Surface(
-                    shape = RectangleShape,
+                    shape = SketchShape,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .sketchBorder(RectangleShape, SketchInk, SketchStroke),
+                    modifier = Modifier.align(Alignment.TopStart),
                 ) {
                     Text(
                         "$number",
@@ -344,6 +364,12 @@ private fun PageCard(
         SketchDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.crop_and_filter)) },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_crop),
+                        contentDescription = null,
+                    )
+                },
                 onClick = { onCrop(); menuOpen = false },
             )
             if (!isFirst) {
@@ -360,6 +386,12 @@ private fun PageCard(
             }
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.delete_page)) },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_delete),
+                        contentDescription = null,
+                    )
+                },
                 onClick = { onDelete(); menuOpen = false },
             )
         }
@@ -368,10 +400,16 @@ private fun PageCard(
 
 @Composable
 private fun OcrBadge(status: OcrStatus, modifier: Modifier = Modifier) {
-    val (icon, descriptionRes) = when (status) {
-        OcrStatus.PENDING, OcrStatus.RUNNING -> Icons.Sharp.HourglassTop to R.string.ocr_running
-        OcrStatus.DONE -> Icons.AutoMirrored.Sharp.TextSnippet to R.string.ocr_ready
-        OcrStatus.FAILED -> Icons.Sharp.ErrorOutline to R.string.ocr_failed
+    val painter = when (status) {
+        OcrStatus.PENDING, OcrStatus.RUNNING -> rememberVectorPainter(Icons.Sharp.HourglassTop)
+        OcrStatus.DONE -> painterResource(R.drawable.ic_ocr)
+        OcrStatus.FAILED -> rememberVectorPainter(Icons.Sharp.ErrorOutline)
+        OcrStatus.NONE -> return
+    }
+    val descriptionRes = when (status) {
+        OcrStatus.PENDING, OcrStatus.RUNNING -> R.string.ocr_running
+        OcrStatus.DONE -> R.string.ocr_ready
+        OcrStatus.FAILED -> R.string.ocr_failed
         OcrStatus.NONE -> return
     }
     Surface(
@@ -379,6 +417,10 @@ private fun OcrBadge(status: OcrStatus, modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
         modifier = modifier.sketchBorder(RectangleShape, SketchInk, SketchStroke),
     ) {
-        Icon(icon, contentDescription = stringResource(descriptionRes), modifier = Modifier.padding(4.dp).size(16.dp))
+        Icon(
+            painter = painter,
+            contentDescription = stringResource(descriptionRes),
+            modifier = Modifier.padding(4.dp).size(16.dp),
+        )
     }
 }

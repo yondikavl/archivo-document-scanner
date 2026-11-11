@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Download
-import androidx.compose.material.icons.sharp.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -27,7 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.yondex.archivo.R
@@ -36,9 +35,9 @@ import com.yondex.archivo.domain.model.PdfPageSize
 import com.yondex.archivo.ui.components.SketchChip
 import com.yondex.archivo.ui.components.SketchChipGap
 import com.yondex.archivo.ui.components.SketchFilledButton
-import com.yondex.archivo.ui.components.SketchInk
 import com.yondex.archivo.ui.components.SketchItemGap
 import com.yondex.archivo.ui.components.SketchOutlinedButton
+import com.yondex.archivo.ui.components.SketchShape
 import com.yondex.archivo.ui.label
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,7 +56,7 @@ fun ExportSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        shape = RectangleShape,
+        shape = SketchShape,
         containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         tonalElevation = 0.dp,
         dragHandle = {
@@ -65,7 +64,7 @@ fun ExportSheet(
                 Modifier
                     .padding(vertical = 12.dp)
                     .size(width = 40.dp, height = 4.dp)
-                    .background(SketchInk, RectangleShape),
+                    .background(MaterialTheme.colorScheme.outlineVariant, SketchShape),
             )
         },
     ) {
@@ -115,7 +114,10 @@ fun ExportSheet(
                     if (exporting) {
                         CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                     } else {
-                        Icon(Icons.Sharp.Share, contentDescription = null)
+                        Icon(
+                            painter = painterResource(R.drawable.ic_share),
+                            contentDescription = null,
+                        )
                     }
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.action_share))

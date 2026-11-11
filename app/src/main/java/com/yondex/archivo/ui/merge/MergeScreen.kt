@@ -16,10 +16,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
 import androidx.compose.material.icons.sharp.CallMerge
-import androidx.compose.material.icons.sharp.Description
-import androidx.compose.material.icons.sharp.KeyboardArrowDown
 import androidx.compose.material.icons.sharp.KeyboardArrowUp
-import androidx.compose.material.icons.sharp.PictureAsPdf
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -37,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -226,7 +224,7 @@ fun MergeScreen(
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
                         ) {
                             Icon(
-                                if (item.isPdf) Icons.Sharp.PictureAsPdf else Icons.Sharp.Description,
+                                painter = painterResource(R.drawable.ic_document),
                                 contentDescription = null,
                             )
                             Spacer(Modifier.width(12.dp))
@@ -245,7 +243,10 @@ fun MergeScreen(
                                 onClick = { viewModel.move(index, 1) },
                                 enabled = index < state.items.lastIndex,
                             ) {
-                                Icon(Icons.Sharp.KeyboardArrowDown, contentDescription = null)
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_arrow_down),
+                                    contentDescription = null,
+                                )
                             }
                         }
                     }

@@ -21,12 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
 import androidx.compose.material.icons.automirrored.sharp.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.sharp.KeyboardArrowRight
-import androidx.compose.material.icons.sharp.Check
-import androidx.compose.material.icons.sharp.AddAPhoto
-import androidx.compose.material.icons.sharp.Crop
-import androidx.compose.material.icons.sharp.Delete
-import androidx.compose.material.icons.automirrored.sharp.RotateRight
-import androidx.compose.material.icons.sharp.DocumentScanner
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -49,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -123,7 +118,10 @@ fun ReviewScreen(
                         .padding(horizontal = 12.dp, vertical = 10.dp),
                 ) {
                     SketchOutlinedButton(onClick = onBack) {
-                        Icon(Icons.Sharp.AddAPhoto, contentDescription = null)
+                        Icon(
+                            painter = painterResource(R.drawable.ic_camera),
+                            contentDescription = null,
+                        )
                         Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.action_add))
                     }
@@ -134,7 +132,10 @@ fun ReviewScreen(
                         if (saving) {
                             CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                         } else {
-                            Icon(Icons.Sharp.Check, contentDescription = null)
+                            Icon(
+                                painter = painterResource(R.drawable.ic_check),
+                                contentDescription = null,
+                            )
                         }
                         Spacer(Modifier.width(8.dp))
                         Text(stringResource(R.string.action_save))
@@ -145,7 +146,7 @@ fun ReviewScreen(
     ) { padding ->
         if (pages.isEmpty()) {
             EmptyState(
-                icon = Icons.Sharp.DocumentScanner,
+                iconRes = R.drawable.ic_scanner,
                 title = stringResource(R.string.empty_review_title),
                 message = stringResource(R.string.empty_review_message),
                 modifier = Modifier.padding(padding).padding(top = 64.dp),
@@ -230,13 +231,22 @@ private fun ReviewPageCard(
             }
             Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
                 IconButton(onClick = onCrop, enabled = !busy) {
-                    Icon(Icons.Sharp.Crop, contentDescription = stringResource(R.string.action_crop))
+                    Icon(
+                        painter = painterResource(R.drawable.ic_crop),
+                        contentDescription = stringResource(R.string.action_crop),
+                    )
                 }
                 IconButton(onClick = onRotate, enabled = !busy) {
-                    Icon(Icons.AutoMirrored.Sharp.RotateRight, contentDescription = stringResource(R.string.action_rotate))
+                    Icon(
+                        painter = painterResource(R.drawable.ic_rotate),
+                        contentDescription = stringResource(R.string.action_rotate),
+                    )
                 }
                 IconButton(onClick = onDelete, enabled = !busy) {
-                    Icon(Icons.Sharp.Delete, contentDescription = stringResource(R.string.action_delete))
+                    Icon(
+                        painter = painterResource(R.drawable.ic_delete),
+                        contentDescription = stringResource(R.string.action_delete),
+                    )
                 }
             }
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {

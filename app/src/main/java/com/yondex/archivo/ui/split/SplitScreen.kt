@@ -2,7 +2,7 @@ package com.yondex.archivo.ui.split
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,8 +22,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
-import androidx.compose.material.icons.sharp.CallSplit
-import androidx.compose.material.icons.sharp.Check
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -43,7 +41,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -60,10 +59,10 @@ import com.yondex.archivo.data.repository.LibraryRepository
 import com.yondex.archivo.data.repository.SplitMode
 import com.yondex.archivo.pdf.PdfRasterizer
 import com.yondex.archivo.ui.components.SketchFilledButton
-import com.yondex.archivo.ui.components.SketchInk
 import com.yondex.archivo.ui.components.SketchItemGap
 import com.yondex.archivo.ui.components.SketchSectionGap
-import com.yondex.archivo.ui.components.SketchStroke
+import com.yondex.archivo.ui.components.SketchShape
+import com.yondex.archivo.ui.components.SketchShapePill
 import com.yondex.archivo.ui.components.TextInputDialog
 import com.yondex.archivo.ui.navigation.NO_ID
 import com.yondex.archivo.ui.navigation.SplitRoute
@@ -265,7 +264,10 @@ fun SplitScreen(
                         if (state.selectedCount == state.pages.size) viewModel.clearSelection()
                         else viewModel.selectAll()
                     }) {
-                        Icon(Icons.Sharp.Check, contentDescription = stringResource(R.string.action_select_all))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_check),
+                            contentDescription = stringResource(R.string.action_select_all),
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
@@ -297,13 +299,15 @@ fun SplitScreen(
                         selected = state.mode == SplitMode.EXTRACT_ONE,
                         onClick = { viewModel.setMode(SplitMode.EXTRACT_ONE) },
                         label = { Text(stringResource(R.string.split_mode_one)) },
-                        shape = RectangleShape,
+                        shape = SketchShapePill,
+                        border = null,
                     )
                     FilterChip(
                         selected = state.mode == SplitMode.EACH_PAGE,
                         onClick = { viewModel.setMode(SplitMode.EACH_PAGE) },
                         label = { Text(stringResource(R.string.split_mode_each)) },
-                        shape = RectangleShape,
+                        shape = SketchShapePill,
+                        border = null,
                     )
                 }
                 if (!state.isPdf) {
@@ -333,12 +337,12 @@ fun SplitScreen(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
-                                .clickable { viewModel.toggle(page.key) }
-                                .border(
-                                    if (selected) SketchStroke else SketchStroke,
-                                    if (selected) MaterialTheme.colorScheme.primary else SketchInk,
-                                    RectangleShape,
+                                .clip(SketchShape)
+                                .background(
+                                    if (selected) MaterialTheme.colorScheme.secondaryContainer
+                                    else MaterialTheme.colorScheme.surfaceContainer,
                                 )
+                                .clickable { viewModel.toggle(page.key) }
                                 .padding(6.dp),
                         ) {
                             PageThumb(page, Modifier.fillMaxWidth().aspectRatio(0.72f))
@@ -366,7 +370,11 @@ fun SplitScreen(
                         CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                         Spacer(Modifier.width(8.dp))
                     } else {
-                        Icon(Icons.Sharp.CallSplit, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_split),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
                         Spacer(Modifier.width(8.dp))
                     }
                     Text(stringResource(R.string.split_action_count, state.selectedCount))

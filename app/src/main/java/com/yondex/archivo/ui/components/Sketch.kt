@@ -1,8 +1,6 @@
 package com.yondex.archivo.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +15,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,83 +36,82 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.annotation.DrawableRes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.zIndex
 
-/** Neo-brutal ink — thick outline + hard offset shadow. */
+/** Modern borderless surfaces with squircle corners. */
+val SketchShape = SquircleShape(28.dp, smoothing = 0.82f)
+val SketchShapeLarge = SquircleShape(36.dp, smoothing = 0.82f)
+val SketchShapeTop = SquircleShape(topStart = 28.dp, topEnd = 28.dp, smoothing = 0.82f)
+val SketchShapePill = SquircleShape(percent = 50, smoothing = 0.88f)
 val SketchInk = Color.Black
-
 @Deprecated("Use SketchInk", ReplaceWith("SketchInk"))
 val SketchShadowBlack = SketchInk
 
-val SketchStroke = 2.5.dp
-val SketchStrokeSelected = 3.dp
-val SketchShadowOffset = 4.dp
-/** Visible gap between shadowed items (cards already reserve shadow padding). */
+/** Kept for call-site compatibility; borders are unused. */
+val SketchStroke = 0.dp
+val SketchStrokeSelected = 0.dp
+val SketchShadowOffset = 0.dp
 val SketchItemGap = 12.dp
 val SketchSectionGap = 16.dp
 val SketchChipGap = 10.dp
 
+/** No-op — modern UI is borderless. */
+@Suppress("UNUSED_PARAMETER")
 fun Modifier.sketchBorder(
-    shape: Shape = RectangleShape,
+    shape: Shape = SketchShape,
     color: Color = SketchInk,
     width: Dp = SketchStroke,
-): Modifier = border(width = width, color = color, shape = shape)
+): Modifier = this
 
 @Composable
 fun SketchCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RectangleShape,
-    ink: Color = SketchInk,
-    paper: Color = MaterialTheme.colorScheme.surfaceContainerLowest,
+    shape: Shape = SketchShape,
+    ink: Color = Color.Transparent,
+    paper: Color = MaterialTheme.colorScheme.surface,
     selected: Boolean = false,
     onClick: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    @Suppress("UNUSED_VARIABLE")
+    val unusedInk = ink
     val interaction = remember { MutableInteractionSource() }
-    val strokeWidth = if (selected) SketchStrokeSelected else SketchStroke
-
-    Box(modifier = modifier.padding(end = SketchShadowOffset, bottom = SketchShadowOffset)) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .offset(x = SketchShadowOffset, y = SketchShadowOffset)
-                .clip(shape)
-                .background(ink)
-                .zIndex(0f),
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .zIndex(1f)
-                .clip(shape)
-                .background(paper)
-                .sketchBorder(shape, ink, strokeWidth)
-                .then(
-                    if (onClick != null) {
-                        Modifier.clickable(
-                            interactionSource = interaction,
-                            indication = ripple(),
-                            onClick = onClick,
-                        )
-                    } else {
-                        Modifier
-                    },
-                ),
-            content = content,
-        )
+    val container = if (selected) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        paper
     }
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(container)
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(
+                        interactionSource = interaction,
+                        indication = ripple(),
+                        onClick = onClick,
+                    )
+                } else {
+                    Modifier
+                },
+            ),
+        content = content,
+    )
 }
 
 @Composable
@@ -124,34 +120,69 @@ fun SketchIconButton(
     contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    size: Dp = 46.dp,
-    shape: Shape = RectangleShape,
-    ink: Color = SketchInk,
+    size: Dp = 44.dp,
+    shape: Shape = SketchShape,
+    ink: Color = Color.Transparent,
 ) {
-    Box(modifier = modifier.size(width = size + SketchShadowOffset, height = size + SketchShadowOffset)) {
-        Box(
-            Modifier
-                .align(Alignment.BottomEnd)
-                .size(size)
-                .clip(shape)
-                .background(ink)
-                .zIndex(0f),
-        )
-        Surface(
-            onClick = onClick,
-            shape = shape,
-            color = MaterialTheme.colorScheme.surfaceContainerLowest,
-            shadowElevation = 0.dp,
-            tonalElevation = 0.dp,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .size(size)
-                .zIndex(1f)
-                .sketchBorder(shape, ink, SketchStroke),
-        ) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Icon(icon, contentDescription = contentDescription, tint = MaterialTheme.colorScheme.onSurface)
-            }
+    SketchIconButton(
+        painter = rememberVectorPainter(icon),
+        contentDescription = contentDescription,
+        onClick = onClick,
+        modifier = modifier,
+        size = size,
+        shape = shape,
+        ink = ink,
+    )
+}
+
+@Composable
+fun SketchIconButton(
+    @DrawableRes iconRes: Int,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = 44.dp,
+    shape: Shape = SketchShape,
+    ink: Color = Color.Transparent,
+) {
+    SketchIconButton(
+        painter = painterResource(iconRes),
+        contentDescription = contentDescription,
+        onClick = onClick,
+        modifier = modifier,
+        size = size,
+        shape = shape,
+        ink = ink,
+    )
+}
+
+@Composable
+fun SketchIconButton(
+    painter: Painter,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = 44.dp,
+    shape: Shape = SketchShape,
+    ink: Color = Color.Transparent,
+) {
+    @Suppress("UNUSED_VARIABLE")
+    val unusedInk = ink
+    Surface(
+        onClick = onClick,
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shadowElevation = 0.dp,
+        tonalElevation = 0.dp,
+        modifier = modifier.size(size),
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            Icon(
+                painter = painter,
+                contentDescription = contentDescription,
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(22.dp),
+            )
         }
     }
 }
@@ -164,55 +195,39 @@ fun SketchChip(
     modifier: Modifier = Modifier,
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null,
-    /** Hard offset shadow — disable in dense rows if siblings would collide. */
+    /** Ignored — kept for call-site compatibility. */
     shadowed: Boolean = true,
 ) {
+    @Suppress("UNUSED_VARIABLE")
+    val unusedShadowed = shadowed
     val paper = if (selected) {
         MaterialTheme.colorScheme.primary
     } else {
-        MaterialTheme.colorScheme.surfaceContainerLowest
+        MaterialTheme.colorScheme.surfaceContainerHigh
     }
     val content = if (selected) {
         MaterialTheme.colorScheme.onPrimary
     } else {
         MaterialTheme.colorScheme.onSurface
     }
-    val stroke = if (selected) SketchStrokeSelected else SketchStroke
-    val chip: @Composable () -> Unit = {
-        Surface(
-            onClick = onClick,
-            shape = RectangleShape,
-            color = paper,
-            contentColor = content,
-            shadowElevation = 0.dp,
-            tonalElevation = 0.dp,
-            modifier = Modifier.sketchBorder(RectangleShape, SketchInk, stroke),
+    Surface(
+        onClick = onClick,
+        shape = SketchShapePill,
+        color = paper,
+        contentColor = content,
+        shadowElevation = 0.dp,
+        tonalElevation = 0.dp,
+        modifier = modifier,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            ) {
-                leadingIcon?.invoke()
-                label()
-                trailingIcon?.invoke()
-            }
+            leadingIcon?.invoke()
+            label()
+            trailingIcon?.invoke()
         }
-    }
-    if (!shadowed) {
-        Box(modifier) { chip() }
-        return
-    }
-    // Pad layout so the hard shadow never paints over a sibling above/beside.
-    Box(modifier = modifier.padding(end = SketchShadowOffset, bottom = SketchShadowOffset)) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .offset(SketchShadowOffset, SketchShadowOffset)
-                .background(SketchInk, RectangleShape)
-                .zIndex(0f),
-        )
-        Box(Modifier.zIndex(1f)) { chip() }
     }
 }
 
@@ -224,26 +239,15 @@ fun SketchFab(
     contentColor: Color = MaterialTheme.colorScheme.onPrimary,
     content: @Composable () -> Unit,
 ) {
-    Box(modifier = modifier.size(58.dp + SketchShadowOffset)) {
-        Box(
-            Modifier
-                .align(Alignment.BottomEnd)
-                .size(58.dp)
-                .background(SketchInk, RectangleShape),
-        )
-        FloatingActionButton(
-            onClick = onClick,
-            shape = RectangleShape,
-            containerColor = containerColor,
-            contentColor = contentColor,
-            elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .size(58.dp)
-                .sketchBorder(RectangleShape, SketchInk, SketchStrokeSelected),
-            content = content,
-        )
-    }
+    FloatingActionButton(
+        onClick = onClick,
+        shape = SketchShape,
+        containerColor = containerColor,
+        contentColor = contentColor,
+        elevation = FloatingActionButtonDefaults.elevation(2.dp, 4.dp, 2.dp, 2.dp),
+        modifier = modifier.size(56.dp),
+        content = content,
+    )
 }
 
 @Composable
@@ -255,30 +259,22 @@ fun SketchExtendedFab(
     containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onPrimary,
 ) {
-    Box(modifier = modifier.padding(end = SketchShadowOffset, bottom = SketchShadowOffset)) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .offset(SketchShadowOffset, SketchShadowOffset)
-                .background(SketchInk, RectangleShape),
-        )
-        Surface(
-            onClick = onClick,
-            shape = RectangleShape,
-            color = containerColor,
-            contentColor = contentColor,
-            shadowElevation = 0.dp,
-            tonalElevation = 0.dp,
-            modifier = Modifier.sketchBorder(RectangleShape, SketchInk, SketchStrokeSelected),
+    Surface(
+        onClick = onClick,
+        shape = SketchShape,
+        color = containerColor,
+        contentColor = contentColor,
+        shadowElevation = 2.dp,
+        tonalElevation = 0.dp,
+        modifier = modifier,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 22.dp, vertical = 16.dp),
-            ) {
-                icon()
-                Spacer(Modifier.width(10.dp))
-                text()
-            }
+            icon()
+            Spacer(Modifier.width(10.dp))
+            text()
         }
     }
 }
@@ -288,31 +284,19 @@ fun SketchFilledButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    /** Stretch button to the outer width (use with Modifier.weight / fillMaxWidth). */
     fillWidth: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
-    Box(modifier = modifier.padding(end = SketchShadowOffset, bottom = SketchShadowOffset)) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .offset(SketchShadowOffset, SketchShadowOffset)
-                .background(SketchInk, RectangleShape)
-                .zIndex(0f),
-        )
-        Button(
-            onClick = onClick,
-            enabled = enabled,
-            shape = RectangleShape,
-            colors = ButtonDefaults.buttonColors(),
-            contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp),
-            modifier = Modifier
-                .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
-                .zIndex(1f)
-                .sketchBorder(RectangleShape, SketchInk, SketchStroke),
-            content = content,
-        )
-    }
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        shape = SketchShape,
+        colors = ButtonDefaults.buttonColors(),
+        elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+        modifier = modifier.then(if (fillWidth) Modifier.fillMaxWidth() else Modifier),
+        content = content,
+    )
 }
 
 @Composable
@@ -320,34 +304,21 @@ fun SketchOutlinedButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    /** Stretch button to the outer width (use with Modifier.weight / fillMaxWidth). */
     fillWidth: Boolean = false,
     content: @Composable RowScope.() -> Unit,
 ) {
-    Box(modifier = modifier.padding(end = SketchShadowOffset, bottom = SketchShadowOffset)) {
-        Box(
-            Modifier
-                .matchParentSize()
-                .offset(SketchShadowOffset, SketchShadowOffset)
-                .background(SketchInk, RectangleShape)
-                .zIndex(0f),
-        )
-        OutlinedButton(
-            onClick = onClick,
-            enabled = enabled,
-            shape = RectangleShape,
-            border = null,
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-            ),
-            contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp),
-            modifier = Modifier
-                .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
-                .zIndex(1f)
-                .sketchBorder(RectangleShape, SketchInk, SketchStroke),
-            content = content,
-        )
-    }
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        shape = SketchShape,
+        border = null,
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+        modifier = modifier.then(if (fillWidth) Modifier.fillMaxWidth() else Modifier),
+        content = content,
+    )
 }
 
 @Composable
@@ -356,29 +327,21 @@ fun SketchBottomBar(
     content: @Composable RowScope.() -> Unit,
 ) {
     Surface(
-        shape = RectangleShape,
-        color = MaterialTheme.colorScheme.surface,
+        shape = SketchShapeTop,
+        color = MaterialTheme.colorScheme.background,
         shadowElevation = 0.dp,
         tonalElevation = 0.dp,
         modifier = modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.fillMaxWidth()) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(SketchStroke)
-                    .background(SketchInk),
-            )
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(64.dp)
-                    .padding(horizontal = SketchSectionGap, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
-                verticalAlignment = Alignment.CenterVertically,
-                content = content,
-            )
-        }
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(68.dp)
+                .padding(horizontal = SketchSectionGap, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
+            verticalAlignment = Alignment.CenterVertically,
+            content = content,
+        )
     }
 }
 
@@ -386,12 +349,12 @@ fun SketchBottomBar(
 fun RowScope.SketchBottomNavItem(
     selected: Boolean,
     onClick: () -> Unit,
-    icon: ImageVector,
+    @DrawableRes iconRes: Int,
     label: String,
     modifier: Modifier = Modifier,
 ) {
     val contentColor = if (selected) {
-        MaterialTheme.colorScheme.onPrimary
+        MaterialTheme.colorScheme.primary
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }
@@ -401,12 +364,9 @@ fun RowScope.SketchBottomNavItem(
         modifier = modifier
             .weight(1f)
             .fillMaxSize()
+            .clip(SketchShape)
             .background(
-                if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                RectangleShape,
-            )
-            .then(
-                if (selected) Modifier.border(SketchStroke, SketchInk, RectangleShape) else Modifier,
+                if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
             )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -416,7 +376,7 @@ fun RowScope.SketchBottomNavItem(
             .padding(horizontal = 4.dp),
     ) {
         Icon(
-            icon,
+            painter = painterResource(iconRes),
             contentDescription = label,
             tint = contentColor,
             modifier = Modifier.size(22.dp),
@@ -445,11 +405,11 @@ fun SketchDropdownMenu(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         offset = offset,
-        shape = RectangleShape,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-        tonalElevation = 0.dp,
-        shadowElevation = 0.dp,
-        border = BorderStroke(SketchStroke, SketchInk),
+        shape = SketchShape,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        tonalElevation = 3.dp,
+        shadowElevation = 4.dp,
+        border = null,
         content = content,
     )
 }
@@ -468,55 +428,41 @@ fun SketchAlertDialog(
         onDismissRequest = onDismissRequest,
         properties = properties,
     ) {
-        Box(
-            modifier = modifier
-                .widthIn(min = 280.dp, max = 560.dp)
-                .padding(end = SketchShadowOffset, bottom = SketchShadowOffset),
+        Surface(
+            shape = SketchShapeLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = AlertDialogDefaults.textContentColor,
+            tonalElevation = 3.dp,
+            shadowElevation = 0.dp,
+            modifier = modifier.widthIn(min = 280.dp, max = 560.dp),
         ) {
-            Box(
-                Modifier
-                    .matchParentSize()
-                    .offset(SketchShadowOffset, SketchShadowOffset)
-                    .background(SketchInk, RectangleShape),
-            )
-            Surface(
-                shape = RectangleShape,
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                contentColor = AlertDialogDefaults.textContentColor,
-                tonalElevation = 0.dp,
-                shadowElevation = 0.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .sketchBorder(RectangleShape, SketchInk, SketchStrokeSelected),
-            ) {
-                Column(Modifier.padding(top = 20.dp, bottom = 12.dp)) {
-                    if (title != null) {
-                        Box(Modifier.padding(horizontal = 24.dp).padding(bottom = 12.dp)) {
-                            CompositionLocalProvider(
-                                LocalContentColor provides AlertDialogDefaults.titleContentColor,
-                                LocalTextStyle provides MaterialTheme.typography.headlineSmall,
-                                content = title,
-                            )
-                        }
+            Column(Modifier.padding(top = 24.dp, bottom = 16.dp)) {
+                if (title != null) {
+                    Box(Modifier.padding(horizontal = 24.dp).padding(bottom = 12.dp)) {
+                        CompositionLocalProvider(
+                            LocalContentColor provides AlertDialogDefaults.titleContentColor,
+                            LocalTextStyle provides MaterialTheme.typography.headlineSmall,
+                            content = title,
+                        )
                     }
-                    if (text != null) {
-                        Box(Modifier.padding(horizontal = 24.dp).padding(bottom = 12.dp)) {
-                            CompositionLocalProvider(
-                                LocalContentColor provides AlertDialogDefaults.textContentColor,
-                                LocalTextStyle provides MaterialTheme.typography.bodyMedium,
-                                content = text,
-                            )
-                        }
+                }
+                if (text != null) {
+                    Box(Modifier.padding(horizontal = 24.dp).padding(bottom = 12.dp)) {
+                        CompositionLocalProvider(
+                            LocalContentColor provides AlertDialogDefaults.textContentColor,
+                            LocalTextStyle provides MaterialTheme.typography.bodyMedium,
+                            content = text,
+                        )
                     }
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp),
-                    ) {
-                        dismissButton?.invoke()
-                        confirmButton()
-                    }
+                }
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                ) {
+                    dismissButton?.invoke()
+                    confirmButton()
                 }
             }
         }
