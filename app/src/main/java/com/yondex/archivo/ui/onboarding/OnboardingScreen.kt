@@ -25,10 +25,13 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -49,8 +53,6 @@ import androidx.compose.ui.unit.dp
 import com.yondex.archivo.R
 import com.yondex.archivo.domain.model.AppLanguage
 import com.yondex.archivo.domain.model.ThemeMode
-import com.yondex.archivo.ui.components.SketchChip
-import com.yondex.archivo.ui.components.SketchChipGap
 import com.yondex.archivo.ui.components.SketchFilledButton
 import com.yondex.archivo.ui.components.SketchOutlinedButton
 import com.yondex.archivo.ui.components.SketchShape
@@ -64,7 +66,6 @@ private data class OnboardingPage(
     @DrawableRes val iconRes: Int,
     @StringRes val titleRes: Int,
     @StringRes val bodyRes: Int,
-    val showPreferences: Boolean = false,
 )
 
 @Composable
@@ -90,7 +91,6 @@ fun OnboardingScreen(
             iconRes = R.drawable.ic_guard,
             titleRes = R.string.onboarding_offline_title,
             bodyRes = R.string.onboarding_offline_body,
-            showPreferences = true,
         ),
     )
     val pagerState = rememberPagerState(pageCount = { pages.size })
@@ -125,7 +125,24 @@ fun OnboardingScreen(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.weight(1f),
             )
-            // Keep Skip slot always so page 3 header height matches pages 1–2.
+            PreferenceIconButton(
+                title = stringResource(R.string.language),
+                iconRes = R.drawable.ic_languange,
+                values = AppLanguage.entries,
+                selected = language,
+                label = { it.label() },
+                onSelect = onLanguageChange,
+            )
+            Spacer(Modifier.width(8.dp))
+            PreferenceIconButton(
+                title = stringResource(R.string.theme),
+                iconRes = R.drawable.ic_theme,
+                values = ThemeMode.entries,
+                selected = themeMode,
+                label = { it.label() },
+                onSelect = onThemeChange,
+            )
+            Spacer(Modifier.width(4.dp))
             TextButton(
                 onClick = {
                     scope.launch { pagerState.animateScrollToPage(pages.lastIndex) }
@@ -143,13 +160,7 @@ fun OnboardingScreen(
                 .weight(1f)
                 .fillMaxWidth(),
         ) { page ->
-            OnboardingPageContent(
-                page = pages[page],
-                language = language,
-                themeMode = themeMode,
-                onLanguageChange = onLanguageChange,
-                onThemeChange = onThemeChange,
-            )
+            OnboardingPageContent(page = pages[page])
         }
 
         Row(
@@ -249,6 +260,102 @@ fun OnboardingScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun <T> PreferenceIconButton(
+    title: String,
+    @DrawableRes iconRes: Int,
+    values: List<T>,
+    selected: T,
+    label: @Composable (T) -> String,
+    onSelect: (T) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(40.dp)
+            .clip(SketchShape)
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .clickable { open = true },
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = title,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp),
+        )
+    }
+
+    if (open) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { open = false },
+            sheetState = sheetState,
+            shape = SketchShapeLarge,
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 0.dp,
+            dragHandle = null,
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 12.dp, vertical = 16.dp),
+            ) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                )
+                values.forEach { value ->
+                    val isSelected = value == selected
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(SketchShape)
+                            .background(
+                                if (isSelected) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    Color.Transparent
+                                },
+                            )
+                            .clickable {
+                                onSelect(value)
+                                open = false
+                            }
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                    ) {
+                        Text(
+                            label(value),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (isSelected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (isSelected) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_check),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp),
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AgreeRow(
@@ -259,69 +366,57 @@ private fun AgreeRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier,
     ) {
         Checkbox(
             checked = agreed,
             onCheckedChange = onAgreedChange,
         )
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(top = 12.dp),
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.weight(1f),
         ) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    stringResource(R.string.onboarding_agree_prefix),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    stringResource(R.string.privacy_policy),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                    textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable(onClick = onOpenPrivacy),
-                )
-                Text(
-                    stringResource(R.string.onboarding_agree_and),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    stringResource(R.string.terms_of_use),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                    textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable(onClick = onOpenTerms),
-                )
-            }
+            Text(
+                stringResource(R.string.onboarding_agree_prefix),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                stringResource(R.string.privacy_policy),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable(onClick = onOpenPrivacy),
+            )
+            Text(
+                stringResource(R.string.onboarding_agree_and),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                stringResource(R.string.terms_of_use),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable(onClick = onOpenTerms),
+            )
         }
     }
 }
 
 @Composable
-private fun OnboardingPageContent(
-    page: OnboardingPage,
-    language: AppLanguage,
-    themeMode: ThemeMode,
-    onLanguageChange: (AppLanguage) -> Unit,
-    onThemeChange: (ThemeMode) -> Unit,
-) {
+private fun OnboardingPageContent(page: OnboardingPage) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = if (page.showPreferences) Arrangement.Top else Arrangement.Center,
+        verticalArrangement = Arrangement.Center,
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 8.dp)
-            .padding(top = if (page.showPreferences) 24.dp else 0.dp, bottom = 12.dp),
+            .padding(horizontal = 8.dp, vertical = 12.dp),
     ) {
         Box(
             contentAlignment = Alignment.Center,
@@ -350,67 +445,5 @@ private fun OnboardingPageContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        if (page.showPreferences) {
-            Spacer(Modifier.height(28.dp))
-            PreferenceGroup(
-                title = stringResource(R.string.language),
-                iconRes = R.drawable.ic_languange,
-            ) {
-                AppLanguage.entries.forEach { value ->
-                    SketchChip(
-                        selected = value == language,
-                        onClick = { onLanguageChange(value) },
-                        label = { Text(value.label()) },
-                    )
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-            PreferenceGroup(
-                title = stringResource(R.string.theme),
-                iconRes = R.drawable.ic_theme,
-            ) {
-                ThemeMode.entries.forEach { value ->
-                    SketchChip(
-                        selected = value == themeMode,
-                        onClick = { onThemeChange(value) },
-                        label = { Text(value.label()) },
-                    )
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun PreferenceGroup(
-    title: String,
-    @DrawableRes iconRes: Int,
-    content: @Composable () -> Unit,
-) {
-    Column(
-        horizontalAlignment = Alignment.Start,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Icon(
-                painter = painterResource(iconRes),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp),
-            )
-            Text(title, style = MaterialTheme.typography.titleSmall)
-        }
-        Spacer(Modifier.height(10.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
-            verticalArrangement = Arrangement.spacedBy(SketchChipGap),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            content()
-        }
     }
 }
