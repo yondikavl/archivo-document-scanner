@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.Folder as FolderIcon
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -108,17 +107,28 @@ fun EmptyState(
     title: String,
     message: String,
     modifier: Modifier = Modifier,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
 ) {
     EmptyState(
         painter = painterResource(iconRes),
         title = title,
         message = message,
         modifier = modifier,
+        actionLabel = actionLabel,
+        onAction = onAction,
     )
 }
 
 @Composable
-fun EmptyState(painter: Painter, title: String, message: String, modifier: Modifier = Modifier) {
+fun EmptyState(
+    painter: Painter,
+    title: String,
+    message: String,
+    modifier: Modifier = Modifier,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -147,6 +157,12 @@ fun EmptyState(painter: Painter, title: String, message: String, modifier: Modif
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+        if (actionLabel != null && onAction != null) {
+            Spacer(Modifier.height(20.dp))
+            SketchFilledButton(onClick = onAction) {
+                Text(actionLabel)
+            }
+        }
     }
 }
 
@@ -342,7 +358,7 @@ fun FolderItem(
                     .background(MaterialTheme.colorScheme.primaryContainer),
             ) {
                 Icon(
-                    Icons.Sharp.FolderIcon,
+                    painter = painterResource(R.drawable.ic_folder),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                 )

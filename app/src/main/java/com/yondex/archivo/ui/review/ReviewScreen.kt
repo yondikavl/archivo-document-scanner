@@ -133,7 +133,7 @@ fun ReviewScreen(
                             CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                         } else {
                             Icon(
-                                painter = painterResource(R.drawable.ic_check),
+                                painter = painterResource(R.drawable.ic_save),
                                 contentDescription = null,
                             )
                         }

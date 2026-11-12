@@ -3,6 +3,7 @@ package com.yondex.archivo.ui.scanner
 import android.Manifest
 import android.content.pm.PackageManager
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -42,10 +43,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Close
-import androidx.compose.material.icons.sharp.FlashOff
-import androidx.compose.material.icons.sharp.FlashOn
-import androidx.compose.material.icons.sharp.CameraAlt
-import androidx.compose.material.icons.sharp.PhotoLibrary
 import androidx.compose.material3.Badge
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -71,6 +68,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -82,6 +80,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yondex.archivo.R
 import com.yondex.archivo.scanner.DocumentCamera
 import com.yondex.archivo.scanner.LiveDetection
+import com.yondex.archivo.ui.components.ConfirmDialog
 import com.yondex.archivo.ui.components.SketchFilledButton
 import com.yondex.archivo.ui.components.Thumbnail
 import kotlinx.coroutines.launch
@@ -108,6 +107,13 @@ fun ScannerScreen(
 
     val pages by viewModel.pages.collectAsStateWithLifecycle()
     val processing by viewModel.processingCount.collectAsStateWithLifecycle()
+    var confirmDiscard by remember { mutableStateOf(false) }
+
+    fun requestClose() {
+        if (pages.isNotEmpty()) confirmDiscard = true else onClose()
+    }
+
+    BackHandler(onBack = ::requestClose)
 
     LaunchedEffect(Unit) {
         if (!hasPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
@@ -123,7 +129,7 @@ fun ScannerScreen(
                 pageCount = pages.size,
                 lastPagePath = pages.lastOrNull()?.processedPath,
                 processing = processing > 0,
-                onClose = onClose,
+                onClose = ::requestClose,
                 onGallery = {
                     galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
@@ -135,10 +141,23 @@ fun ScannerScreen(
                 onGallery = {
                     galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
-                onClose = onClose,
+                onClose = ::requestClose,
                 onReview = onReview.takeIf { pages.isNotEmpty() },
             )
         }
+    }
+
+    if (confirmDiscard) {
+        ConfirmDialog(
+            title = stringResource(R.string.discard_scan_title),
+            message = stringResource(R.string.discard_scan_message, pages.size),
+            confirmLabel = stringResource(R.string.action_discard),
+            onDismiss = { confirmDiscard = false },
+            onConfirm = {
+                confirmDiscard = false
+                onClose()
+            },
+        )
     }
 }
 
@@ -223,7 +242,9 @@ private fun CameraContent(
             }
             IconButton(onClick = camera::toggleTorch) {
                 Icon(
-                    if (torchOn) Icons.Sharp.FlashOn else Icons.Sharp.FlashOff,
+                    painter = painterResource(
+                        if (torchOn) R.drawable.ic_flash_on else R.drawable.ic_flash_off,
+                    ),
                     contentDescription = stringResource(R.string.flash),
                     tint = Color.White,
                 )
@@ -259,7 +280,7 @@ private fun CameraContent(
         ) {
             IconButton(onClick = onGallery, modifier = Modifier.size(56.dp)) {
                 Icon(
-                    Icons.Sharp.PhotoLibrary,
+                    painter = painterResource(R.drawable.ic_gallery),
                     contentDescription = stringResource(R.string.import_gallery),
                     tint = Color.White,
                 )
@@ -384,7 +405,11 @@ private fun PermissionRationale(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize().padding(32.dp),
         ) {
-            Icon(Icons.Sharp.CameraAlt, contentDescription = null, modifier = Modifier.size(64.dp))
+            Icon(
+                painter = painterResource(R.drawable.ic_camera),
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+            )
             Spacer(Modifier.height(16.dp))
             Text(stringResource(R.string.camera_permission_title), style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))

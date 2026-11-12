@@ -17,7 +17,7 @@ Scanner dokumen offline untuk Android. Ambil foto halaman, deteksi tepi otomatis
 - **Export** — PDF (A4 / Letter / sesuai gambar), JPG, PNG, atau TXT; bagikan atau simpan via SAF / galeri
 
 ### PDF & library
-- **Impor PDF** — simpan ke library lokal, filter beranda (Semua / Scans / PDF)
+- **Impor PDF** — simpan ke library lokal, filter beranda (Semua / Hasil Scan / PDF); batch impor tetap di Home
 - **Viewer PDF** — baca offline dengan toolbar anotasi
 - **Rename file** — ganti judul tampilan dari Home atau reader
 - **Highlight & comment** — sorot area halaman atau tempel komentar (tersimpan di Room)
@@ -27,8 +27,10 @@ Scanner dokumen offline untuk Android. Ambil foto halaman, deteksi tepi otomatis
 
 ### Lainnya
 - **QR / barcode scanner** — scan via kamera (ML Kit), salin, bagikan, atau buka tautan
-- **Bottom navigation** — Home, QR, Scan, Settings
-- **Pengaturan** — bahasa (sistem/English/Indonesia), tema (sistem/terang/gelap), warna dinamis Material You, filter bawaan, OCR otomatis, ukuran & kualitas PDF
+- **Bottom navigation** — Home, QR, Pindai/Scan (aksi kamera), Settings — filter Home “Hasil Scan” = arsip hasil pindai (bukan tab kamera)
+- **Pencarian** — FTS dokumen + judul PDF library
+- **Onboarding** — first-run singkat (auto-capture, Scans vs PDF, offline/privacy)
+- **Pengaturan** — bahasa (sistem/English/Indonesia), tema (sistem/terang/gelap), warna dinamis Material You, filter bawaan, OCR otomatis, ukuran & kualitas PDF; About menampilkan trust copy offline
 - **UI modern** — Material 3 flat, warna brand hijau, corner squircle, icon drawable kustom
 
 ## Tech stack

@@ -109,8 +109,8 @@ class SplitViewModel @Inject constructor(
     private val route = savedStateHandle.toRoute<SplitRoute>()
     private val _state = MutableStateFlow(SplitUiState())
     val state: StateFlow<SplitUiState> = _state.asStateFlow()
-    private val _done = MutableSharedFlow<Long>(extraBufferCapacity = 1)
-    val done: SharedFlow<Long> = _done
+    private val _done = MutableSharedFlow<SplitResult>(extraBufferCapacity = 1)
+    val done: SharedFlow<SplitResult> = _done
     private val _askTitle = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val askTitle: SharedFlow<String> = _askTitle
 
@@ -212,41 +212,45 @@ class SplitViewModel @Inject constructor(
                         titlePrefix = title.trim().ifBlank { state.title },
                         removeFromSource = state.removeFromSource,
                     )
-                    ids.first()
+                    SplitResult.Document(ids.first())
                 }
                 route.libraryFileId != NO_ID -> {
                     val file = libraryRepository.get(route.libraryFileId) ?: error("PDF missing")
-                    val ids = documentRepository.createDocumentFromPdf(
-                        libraryPath = file.path,
+                    val ids = libraryRepository.splitPdf(
+                        sourceId = file.id,
                         pageIndices = ordered.mapNotNull { it.pdfIndex },
-                        title = title.trim().ifBlank { file.title },
-                        folderId = null,
                         mode = state.mode,
+                        titlePrefix = title.trim().ifBlank { file.title },
                     )
-                    ids.first()
+                    SplitResult.LibraryPdf(ids.first())
                 }
                 else -> error("Nothing to split")
             }
-        }.onSuccess { id ->
+        }.onSuccess { result ->
             _state.update { it.copy(busy = false) }
-            _done.emit(id)
+            _done.emit(result)
         }.onFailure { e ->
             _state.update { it.copy(busy = false, error = e.message ?: "Split failed") }
         }
     }
 }
 
+sealed class SplitResult {
+    data class Document(val id: Long) : SplitResult()
+    data class LibraryPdf(val id: Long) : SplitResult()
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SplitScreen(
     onBack: () -> Unit,
-    onDone: (Long) -> Unit,
+    onDone: (SplitResult) -> Unit,
     viewModel: SplitViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var titleDialog by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(Unit) { viewModel.done.collect { onDone(it) } }
+    LaunchedEffect(Unit) { viewModel.done.collect(onDone) }
     LaunchedEffect(Unit) { viewModel.askTitle.collect { titleDialog = it } }
 
     Scaffold(

@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.Download
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -101,7 +99,10 @@ fun ExportSheet(
                     modifier = Modifier.weight(1f),
                     fillWidth = true,
                 ) {
-                    Icon(Icons.Sharp.Download, contentDescription = null)
+                    Icon(
+                        painter = painterResource(R.drawable.ic_save),
+                        contentDescription = null,
+                    )
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(if (isImage) R.string.to_gallery else R.string.action_save))
                 }
@@ -115,7 +116,7 @@ fun ExportSheet(
                         CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                     } else {
                         Icon(
-                            painter = painterResource(R.drawable.ic_share),
+                            painter = painterResource(R.drawable.ic_export),
                             contentDescription = null,
                         )
                     }

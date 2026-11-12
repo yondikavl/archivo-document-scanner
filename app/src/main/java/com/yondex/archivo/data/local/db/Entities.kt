@@ -152,6 +152,8 @@ data class LibraryFileEntity(
     @ColumnInfo(name = "size_bytes") val sizeBytes: Long,
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "opened_at") val openedAt: Long,
+    @ColumnInfo(name = "cover_path") val coverPath: String? = null,
+    @ColumnInfo(name = "page_count") val pageCount: Int = 0,
 )
 
 @Entity(

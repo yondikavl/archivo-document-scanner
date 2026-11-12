@@ -29,6 +29,7 @@ import com.yondex.archivo.ui.review.ReviewScreen
 import com.yondex.archivo.ui.scanner.ScannerScreen
 import com.yondex.archivo.ui.search.SearchScreen
 import com.yondex.archivo.ui.settings.SettingsScreen
+import com.yondex.archivo.ui.split.SplitResult
 import com.yondex.archivo.ui.split.SplitScreen
 import com.yondex.archivo.ui.tags.TagsScreen
 
@@ -44,7 +45,6 @@ fun ArchivoNavHost() {
     val selectedTab = when {
         destination?.hasRoute<SettingsRoute>() == true -> MainTab.Settings
         destination?.hasRoute<ScannerRoute>() == true -> MainTab.Scan
-        destination?.hasRoute<QrScannerRoute>() == true -> MainTab.Qr
         else -> MainTab.Home
     }
     val showBottomBar = destination?.hasRoute<HomeRoute>() == true ||
@@ -75,7 +75,6 @@ fun ArchivoNavHost() {
                 launchSingleTop = true
                 restoreState = true
             }
-            MainTab.Qr -> navController.navigate(QrScannerRoute)
             MainTab.Scan -> navController.navigate(ScannerRoute(folderId = currentHomeFolderId()))
         }
     }
@@ -110,6 +109,10 @@ fun ArchivoNavHost() {
                     onOpenPdf = { navController.navigate(PdfReaderRoute(it)) },
                     onSearch = { navController.navigate(SearchRoute) },
                     onManageTags = { navController.navigate(TagsRoute) },
+                    onScan = {
+                        navController.navigate(ScannerRoute(folderId = currentHomeFolderId()))
+                    },
+                    onQr = { navController.navigate(QrScannerRoute) },
                     onMerge = { documentIds, libraryFileIds ->
                         navController.navigate(
                             MergeRoute(documentIds = documentIds, libraryFileIds = libraryFileIds),
@@ -176,9 +179,18 @@ fun ArchivoNavHost() {
             composable<SplitRoute> {
                 SplitScreen(
                     onBack = dropUnlessResumed(block = back),
-                    onDone = { documentId ->
-                        navController.navigate(DocumentRoute(documentId)) {
-                            popUpTo<SplitRoute> { inclusive = true }
+                    onDone = { result ->
+                        when (result) {
+                            is SplitResult.Document -> {
+                                navController.navigate(DocumentRoute(result.id)) {
+                                    popUpTo<SplitRoute> { inclusive = true }
+                                }
+                            }
+                            is SplitResult.LibraryPdf -> {
+                                navController.navigate(PdfReaderRoute(result.id)) {
+                                    popUpTo<SplitRoute> { inclusive = true }
+                                }
+                            }
                         }
                     },
                 )
@@ -187,6 +199,7 @@ fun ArchivoNavHost() {
                 SearchScreen(
                     onBack = dropUnlessResumed(block = back),
                     onOpenDocument = { navController.navigate(DocumentRoute(it)) },
+                    onOpenPdf = { navController.navigate(PdfReaderRoute(it)) },
                 )
             }
             composable<TagsRoute> {

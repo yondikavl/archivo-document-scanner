@@ -32,8 +32,15 @@ class FileStorage @Inject constructor(
     fun newLibraryFile(name: String): File =
         File(libraryDir(), "${UUID.randomUUID()}_$name")
 
+    fun libraryCoverFile(libraryFileId: Long): File =
+        File(libraryDir(), "covers/$libraryFileId.jpg").also { it.parentFile?.mkdirs() }
+
     fun deleteLibraryFile(path: String) {
         File(path).delete()
+    }
+
+    fun deleteLibraryCover(libraryFileId: Long) {
+        libraryCoverFile(libraryFileId).delete()
     }
 
     fun newPageFile(documentId: Long, prefix: String): File =

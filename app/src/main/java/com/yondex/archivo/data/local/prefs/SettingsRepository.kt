@@ -42,6 +42,7 @@ class SettingsRepository @Inject constructor(
             autoOcr = prefs[Keys.AUTO_OCR] ?: defaults.autoOcr,
             viewMode = prefs[Keys.VIEW_MODE].toEnum(defaults.viewMode),
             sortOrder = prefs[Keys.SORT_ORDER].toEnum(defaults.sortOrder),
+            onboardingDone = prefs[Keys.ONBOARDING_DONE] ?: defaults.onboardingDone,
         )
     }
 
@@ -56,6 +57,7 @@ class SettingsRepository @Inject constructor(
     suspend fun setAutoOcr(value: Boolean) = put(Keys.AUTO_OCR, value)
     suspend fun setViewMode(value: ViewMode) = put(Keys.VIEW_MODE, value.name)
     suspend fun setSortOrder(value: SortOrder) = put(Keys.SORT_ORDER, value.name)
+    suspend fun setOnboardingDone(value: Boolean) = put(Keys.ONBOARDING_DONE, value)
 
     private suspend fun <T> put(key: Preferences.Key<T>, value: T) {
         dataStore.edit { it[key] = value }
@@ -71,6 +73,7 @@ class SettingsRepository @Inject constructor(
         val AUTO_OCR = booleanPreferencesKey("auto_ocr")
         val VIEW_MODE = stringPreferencesKey("view_mode")
         val SORT_ORDER = stringPreferencesKey("sort_order")
+        val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
     }
 }
 

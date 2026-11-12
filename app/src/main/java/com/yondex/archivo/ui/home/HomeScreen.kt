@@ -37,15 +37,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
-import androidx.compose.material.icons.automirrored.sharp.Sort
 import androidx.compose.material.icons.sharp.CallMerge
 import androidx.compose.material.icons.sharp.Close
 import androidx.compose.material.icons.sharp.MoreVert
 import androidx.compose.material.icons.sharp.SelectAll
-import androidx.compose.material.icons.sharp.CreateNewFolder
-import androidx.compose.material.icons.sharp.Folder as FolderIcon
-import androidx.compose.material.icons.sharp.GridView
-import androidx.compose.material.icons.automirrored.sharp.ViewList
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -72,6 +67,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -93,7 +93,6 @@ import com.yondex.archivo.ui.components.FolderPickerDialog
 import com.yondex.archivo.ui.components.SketchCard
 import com.yondex.archivo.ui.components.SketchChip
 import com.yondex.archivo.ui.components.SketchDropdownMenu
-import com.yondex.archivo.ui.components.SketchIconButton
 import com.yondex.archivo.ui.components.SketchChipGap
 import com.yondex.archivo.ui.components.SketchItemGap
 import com.yondex.archivo.ui.components.SketchShape
@@ -101,6 +100,7 @@ import com.yondex.archivo.ui.components.SketchShapeLarge
 import com.yondex.archivo.ui.components.TagDot
 import com.yondex.archivo.ui.components.TagPickerDialog
 import com.yondex.archivo.ui.components.TextInputDialog
+import com.yondex.archivo.ui.components.Thumbnail
 import com.yondex.archivo.ui.components.formatDate
 import com.yondex.archivo.ui.label
 import java.util.Calendar
@@ -125,6 +125,8 @@ fun HomeScreen(
     onOpenPdf: (Long) -> Unit,
     onSearch: () -> Unit,
     onManageTags: () -> Unit,
+    onScan: () -> Unit,
+    onQr: () -> Unit,
     onMerge: (documentIds: String, libraryFileIds: String) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -143,9 +145,6 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         viewModel.messages.collect { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
     }
-    LaunchedEffect(Unit) {
-        viewModel.imported.collect { file -> onOpenPdf(file.id) }
-    }
 
     Scaffold(
         topBar = {
@@ -159,6 +158,7 @@ fun HomeScreen(
                         count = state.selectionCount,
                         canMerge = state.canMerge,
                         hasDocuments = state.selection.isNotEmpty(),
+                        canDelete = state.canDeleteSelection,
                         onClose = viewModel::clearSelection,
                         onSelectAll = viewModel::selectAll,
                         onMerge = {
@@ -176,6 +176,17 @@ fun HomeScreen(
                         sortOrder = state.sortOrder,
                         onBack = onBack,
                         onSearch = onSearch,
+                        onToggleView = {
+                            viewModel.setViewMode(if (state.viewMode == ViewMode.GRID) ViewMode.LIST else ViewMode.GRID)
+                        },
+                        onSort = viewModel::setSortOrder,
+                        onCreateFolder = { dialog = HomeDialog.CreateFolder },
+                        onManageTags = onManageTags,
+                    )
+                } else {
+                    RootHomeTopBar(
+                        viewMode = state.viewMode,
+                        sortOrder = state.sortOrder,
                         onToggleView = {
                             viewModel.setViewMode(if (state.viewMode == ViewMode.GRID) ViewMode.LIST else ViewMode.GRID)
                         },
@@ -210,7 +221,7 @@ fun HomeScreen(
                             onImport = {
                                 importLauncher.launch(arrayOf("application/pdf"))
                             },
-                            onManageTags = onManageTags,
+                            onQr = onQr,
                         )
                     }
                     fullWidthItem("search") {
@@ -218,7 +229,7 @@ fun HomeScreen(
                     }
                     fullWidthItem("categories") {
                         CategoryRow(
-                            selected = state.filter,
+                            selectedFilter = state.filter,
                             onSelect = viewModel::setFilter,
                             modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
                         )
@@ -313,20 +324,32 @@ fun HomeScreen(
                     items(
                         previewFiles,
                         key = { "lib_${it.id}" },
-                        span = { GridItemSpan(maxLineSpan) },
+                        span = { if (isGrid) GridItemSpan(1) else GridItemSpan(maxLineSpan) },
                     ) { file ->
                         Box {
                             val selected = file.id in state.pdfSelection
-                            LibraryFileRow(
-                                file = file,
-                                selected = selected,
-                                onClick = {
-                                    if (state.isSelecting) viewModel.togglePdfSelection(file.id)
-                                    else onOpenPdf(file.id)
-                                },
-                                onLongClick = { viewModel.togglePdfSelection(file.id) },
-                                onMore = { libraryMenu = file },
-                            )
+                            val onClick = {
+                                if (state.isSelecting) viewModel.togglePdfSelection(file.id)
+                                else onOpenPdf(file.id)
+                            }
+                            val onLongClick = { viewModel.togglePdfSelection(file.id) }
+                            if (isGrid) {
+                                LibraryFileGridCard(
+                                    file = file,
+                                    selected = selected,
+                                    onClick = onClick,
+                                    onLongClick = onLongClick,
+                                    onMore = { libraryMenu = file },
+                                )
+                            } else {
+                                LibraryFileRow(
+                                    file = file,
+                                    selected = selected,
+                                    onClick = onClick,
+                                    onLongClick = onLongClick,
+                                    onMore = { libraryMenu = file },
+                                )
+                            }
                             SketchDropdownMenu(
                                 expanded = libraryMenu?.id == file.id,
                                 onDismissRequest = { libraryMenu = null },
@@ -403,17 +426,47 @@ fun HomeScreen(
                     }
                 } else if (!state.isLoading && state.folders.isEmpty() && previewFiles.isEmpty()) {
                     fullWidthItem("empty") {
+                        val (titleRes, messageRes, iconRes) = when {
+                            state.tagFilter.isNotEmpty() -> Triple(
+                                R.string.empty_no_documents_filter,
+                                R.string.empty_no_documents_filter_message,
+                                R.drawable.ic_tag,
+                            )
+                            state.filter == HomeFilter.SCANS -> Triple(
+                                R.string.empty_scans_title,
+                                R.string.empty_scans_message,
+                                R.drawable.ic_scanner,
+                            )
+                            state.filter == HomeFilter.PDF -> Triple(
+                                R.string.empty_pdf_title,
+                                R.string.empty_pdf_message,
+                                R.drawable.ic_document,
+                            )
+                            else -> Triple(
+                                R.string.empty_home_title,
+                                R.string.empty_home_message,
+                                R.drawable.ic_upload,
+                            )
+                        }
+                        val actionLabel = when {
+                            state.tagFilter.isNotEmpty() -> null
+                            state.filter == HomeFilter.PDF -> stringResource(R.string.import_pdf)
+                            else -> stringResource(R.string.action_scan)
+                        }
+                        val onAction = when {
+                            state.tagFilter.isNotEmpty() -> null
+                            state.filter == HomeFilter.PDF -> {
+                                { importLauncher.launch(arrayOf("application/pdf")) }
+                            }
+                            else -> onScan
+                        }
                         EmptyState(
-                            iconRes = R.drawable.ic_upload,
-                            title = stringResource(
-                                if (state.tagFilter.isNotEmpty()) R.string.empty_no_documents_filter
-                                else R.string.empty_home_title,
-                            ),
-                            message = stringResource(
-                                if (state.tagFilter.isNotEmpty()) R.string.empty_no_documents_filter_message
-                                else R.string.empty_home_message,
-                            ),
+                            iconRes = iconRes,
+                            title = stringResource(titleRes),
+                            message = stringResource(messageRes),
                             modifier = Modifier.padding(top = 32.dp),
+                            actionLabel = actionLabel,
+                            onAction = onAction,
                         )
                     }
                 }
@@ -462,8 +515,8 @@ fun HomeScreen(
             )
         }
         HomeDialog.DeleteDocuments -> ConfirmDialog(
-            title = stringResource(R.string.delete_documents_title, state.selection.size),
-            message = stringResource(R.string.delete_documents_message),
+            title = stringResource(R.string.delete_selection_title, state.selectionCount),
+            message = stringResource(R.string.delete_selection_message),
             onDismiss = { dialog = null },
             onConfirm = { viewModel.deleteSelected(); dialog = null },
         )
@@ -484,7 +537,7 @@ fun HomeScreen(
     }
 }
 
-private const val ALL_PREVIEW_LIMIT = 2
+private const val ALL_PREVIEW_LIMIT = 6
 
 private fun LazyGridScope.fullWidthItem(key: String, content: @Composable () -> Unit) {
     item(key = key, span = { GridItemSpan(maxLineSpan) }) { content() }
@@ -493,7 +546,7 @@ private fun LazyGridScope.fullWidthItem(key: String, content: @Composable () -> 
 @Composable
 private fun GreetingHeader(
     onImport: () -> Unit,
-    onManageTags: () -> Unit,
+    onQr: () -> Unit,
 ) {
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     val greeting = stringResource(
@@ -503,9 +556,10 @@ private fun GreetingHeader(
             else -> R.string.greeting_evening
         },
     )
+    val qrLabel = stringResource(R.string.nav_qr)
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 10.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 10.dp),
     ) {
         Column(Modifier.weight(1f)) {
             Text(
@@ -519,29 +573,72 @@ private fun GreetingHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        SketchIconButton(
-            iconRes = R.drawable.ic_tag,
-            contentDescription = stringResource(R.string.manage_tags),
-            onClick = onManageTags,
-            size = 48.dp,
-        )
         Spacer(Modifier.width(SketchChipGap))
-        SketchIconButton(
-            iconRes = R.drawable.ic_upload,
-            contentDescription = stringResource(R.string.import_file),
+        Surface(
+            onClick = onQr,
+            shape = SketchShape,
+            color = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            shadowElevation = 0.dp,
+            tonalElevation = 0.dp,
+            modifier = Modifier.semantics {
+                contentDescription = qrLabel
+                role = Role.Button
+            },
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.padding(12.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_qrcode),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+        }
+        Spacer(Modifier.width(SketchChipGap))
+        Surface(
             onClick = onImport,
-            size = 48.dp,
-            ink = MaterialTheme.colorScheme.primaryContainer,
-        )
+            shape = SketchShape,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            shadowElevation = 0.dp,
+            tonalElevation = 0.dp,
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_upload),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.import_pdf),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
     }
 }
 
 @Composable
 private fun SearchEntry(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val searchLabel = stringResource(R.string.search_documents_hint)
     SketchCard(
         onClick = onClick,
         shape = SketchShape,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = searchLabel
+                role = Role.Button
+            },
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -555,7 +652,7 @@ private fun SearchEntry(onClick: () -> Unit, modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.width(12.dp))
             Text(
-                stringResource(R.string.search_documents_hint),
+                searchLabel,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -564,7 +661,7 @@ private fun SearchEntry(onClick: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun CategoryRow(selected: HomeFilter, onSelect: (HomeFilter) -> Unit, modifier: Modifier = Modifier) {
+private fun CategoryRow(selectedFilter: HomeFilter, onSelect: (HomeFilter) -> Unit, modifier: Modifier = Modifier) {
     val items = listOf(
         Triple(HomeFilter.ALL, R.string.filter_all, R.drawable.ic_home),
         Triple(HomeFilter.SCANS, R.string.filter_scans, R.drawable.ic_scanner),
@@ -574,8 +671,9 @@ private fun CategoryRow(selected: HomeFilter, onSelect: (HomeFilter) -> Unit, mo
         horizontalArrangement = Arrangement.spacedBy(SketchItemGap),
         modifier = modifier.fillMaxWidth(),
     ) {
-        items.forEach { (filter, label, iconRes) ->
-            val active = filter == selected
+        items.forEach { (filter, labelRes, iconRes) ->
+            val active = filter == selectedFilter
+            val label = stringResource(labelRes)
             Surface(
                 onClick = { onSelect(filter) },
                 shape = SketchShape,
@@ -593,7 +691,12 @@ private fun CategoryRow(selected: HomeFilter, onSelect: (HomeFilter) -> Unit, mo
                 tonalElevation = 0.dp,
                 modifier = Modifier
                     .weight(1f)
-                    .height(96.dp),
+                    .height(96.dp)
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = label
+                        selected = active
+                        role = Role.Tab
+                    },
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -607,7 +710,7 @@ private fun CategoryRow(selected: HomeFilter, onSelect: (HomeFilter) -> Unit, mo
                     )
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        stringResource(label),
+                        label,
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
                         maxLines = 1,
@@ -674,6 +777,91 @@ private fun RecentlyAddedCard(file: LibraryFile, onClick: () -> Unit) {
 }
 
 @Composable
+private fun LibraryFileGridCard(
+    file: LibraryFile,
+    selected: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    onMore: () -> Unit,
+) {
+    SketchCard(
+        selected = selected,
+        shape = SketchShapeLarge,
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(148.dp)
+                    .clip(SketchShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            ) {
+                Thumbnail(file.coverPath, Modifier.fillMaxSize())
+                if (selected) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(10.dp)
+                            .size(22.dp)
+                            .clip(SketchShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_check),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(14.dp),
+                        )
+                    }
+                }
+                if (file.pageCount > 0) {
+                    Text(
+                        stringResource(R.string.pages_short, file.pageCount),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(10.dp)
+                            .clip(SketchShape)
+                            .background(Color.Black.copy(alpha = 0.35f))
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                    )
+                }
+                IconButton(
+                    onClick = onMore,
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                ) {
+                    Icon(
+                        Icons.Sharp.MoreVert,
+                        contentDescription = stringResource(R.string.action_more),
+                        tint = Color.White,
+                    )
+                }
+            }
+            Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+                Text(
+                    file.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    formatFileSize(file.sizeBytes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun LibraryFileRow(
     file: LibraryFile,
     selected: Boolean = false,
@@ -697,14 +885,9 @@ private fun LibraryFileRow(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(SketchShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_document),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp),
-                )
+                Thumbnail(file.coverPath, Modifier.fillMaxSize())
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
@@ -715,7 +898,12 @@ private fun LibraryFileRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    "${formatDate(file.openedAt)} • ${formatFileSize(file.sizeBytes)}",
+                    buildString {
+                        if (file.pageCount > 0) append(stringResource(R.string.pages_short, file.pageCount)).append(" • ")
+                        append(formatDate(file.createdAt))
+                        append(" • ")
+                        append(formatFileSize(file.sizeBytes))
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -761,6 +949,62 @@ private fun SectionHeader(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+private fun RootHomeTopBar(
+    viewMode: ViewMode,
+    sortOrder: SortOrder,
+    onToggleView: () -> Unit,
+    onSort: (SortOrder) -> Unit,
+    onCreateFolder: () -> Unit,
+    onManageTags: () -> Unit,
+) {
+    var sortMenu by remember { mutableStateOf(false) }
+    TopAppBar(
+        title = { },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+        actions = {
+            IconButton(onClick = onToggleView) {
+                Icon(
+                    painter = painterResource(
+                        if (viewMode == ViewMode.GRID) R.drawable.ic_list else R.drawable.ic_grid,
+                    ),
+                    contentDescription = stringResource(R.string.change_view),
+                )
+            }
+            Box {
+                IconButton(onClick = { sortMenu = true }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_sort),
+                        contentDescription = stringResource(R.string.action_sort),
+                    )
+                }
+                SketchDropdownMenu(expanded = sortMenu, onDismissRequest = { sortMenu = false }) {
+                    SortOrder.entries.forEach { order ->
+                        DropdownMenuItem(
+                            text = { Text(order.label()) },
+                            leadingIcon = { RadioButton(selected = order == sortOrder, onClick = null) },
+                            onClick = { onSort(order); sortMenu = false },
+                        )
+                    }
+                }
+            }
+            IconButton(onClick = onCreateFolder) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_folder_add),
+                    contentDescription = stringResource(R.string.new_folder),
+                )
+            }
+            IconButton(onClick = onManageTags) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_tag),
+                    contentDescription = stringResource(R.string.manage_tags),
+                )
+            }
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun FolderTopBar(
     title: String,
     viewMode: ViewMode,
@@ -791,13 +1035,18 @@ private fun FolderTopBar(
             }
             IconButton(onClick = onToggleView) {
                 Icon(
-                    if (viewMode == ViewMode.GRID) Icons.AutoMirrored.Sharp.ViewList else Icons.Sharp.GridView,
+                    painter = painterResource(
+                        if (viewMode == ViewMode.GRID) R.drawable.ic_list else R.drawable.ic_grid,
+                    ),
                     contentDescription = stringResource(R.string.change_view),
                 )
             }
             Box {
                 IconButton(onClick = { sortMenu = true }) {
-                    Icon(Icons.AutoMirrored.Sharp.Sort, contentDescription = stringResource(R.string.action_sort))
+                    Icon(
+                        painter = painterResource(R.drawable.ic_sort),
+                        contentDescription = stringResource(R.string.action_sort),
+                    )
                 }
                 SketchDropdownMenu(expanded = sortMenu, onDismissRequest = { sortMenu = false }) {
                     SortOrder.entries.forEach { order ->
@@ -816,7 +1065,12 @@ private fun FolderTopBar(
                 SketchDropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.new_folder)) },
-                        leadingIcon = { Icon(Icons.Sharp.CreateNewFolder, contentDescription = null) },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_folder_add),
+                                contentDescription = null,
+                            )
+                        },
                         onClick = { onCreateFolder(); moreMenu = false },
                     )
                     DropdownMenuItem(
@@ -841,6 +1095,7 @@ private fun SelectionTopBar(
     count: Int,
     canMerge: Boolean,
     hasDocuments: Boolean,
+    canDelete: Boolean,
     onClose: () -> Unit,
     onSelectAll: () -> Unit,
     onMerge: () -> Unit,
@@ -880,7 +1135,7 @@ private fun SelectionTopBar(
                     contentDescription = stringResource(R.string.action_move),
                 )
             }
-            IconButton(onClick = onDelete, enabled = hasDocuments) {
+            IconButton(onClick = onDelete, enabled = canDelete) {
                 Icon(
                     painter = painterResource(R.drawable.ic_delete),
                     contentDescription = stringResource(R.string.action_delete),

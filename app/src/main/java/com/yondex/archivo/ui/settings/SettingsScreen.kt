@@ -53,6 +53,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -71,11 +72,14 @@ import com.yondex.archivo.domain.model.ThemeMode
 import com.yondex.archivo.ui.components.SketchShape
 import com.yondex.archivo.ui.components.SketchShapeLarge
 import com.yondex.archivo.ui.label
+import com.yondex.archivo.ui.legal.LegalDocument
+import com.yondex.archivo.ui.legal.LegalDocumentSheet
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Year
 import javax.inject.Inject
 
 @HiltViewModel
@@ -96,6 +100,7 @@ class SettingsViewModel @Inject constructor(private val repository: SettingsRepo
 @Composable
 fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    var legalDoc by remember { mutableStateOf<LegalDocument?>(null) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -208,6 +213,23 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
             }
 
             SettingsGroup(
+                title = stringResource(R.string.section_legal),
+                iconRes = R.drawable.ic_guard,
+            ) {
+                ClickSetting(
+                    title = stringResource(R.string.privacy_policy),
+                    iconRes = R.drawable.ic_guard,
+                    onClick = { legalDoc = LegalDocument.Privacy },
+                )
+                SettingsDivider()
+                ClickSetting(
+                    title = stringResource(R.string.terms_of_use),
+                    iconRes = R.drawable.ic_about,
+                    onClick = { legalDoc = LegalDocument.Terms },
+                )
+            }
+
+            SettingsGroup(
                 title = stringResource(R.string.section_about),
                 iconRes = R.drawable.ic_about,
                 framed = false,
@@ -237,11 +259,98 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 6.dp),
                     )
+                    Text(
+                        stringResource(R.string.about_trust),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 16.dp),
+                    )
+                    Text(
+                        stringResource(R.string.about_trust_detail),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                    Text(
+                        stringResource(R.string.pdf_annotations_local_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 10.dp),
+                    )
+                    Spacer(Modifier.height(28.dp))
+                    Text(
+                        stringResource(R.string.yondex_name),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(
+                        stringResource(R.string.yondex_copyright, Year.now().value),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
                 }
             }
 
             Spacer(Modifier.height(20.dp))
         }
+    }
+
+    legalDoc?.let { doc ->
+        LegalDocumentSheet(document = doc, onDismiss = { legalDoc = null })
+    }
+}
+
+@Composable
+private fun ClickSetting(
+    title: String,
+    onClick: () -> Unit,
+    @DrawableRes iconRes: Int? = null,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 16.dp),
+    ) {
+        if (iconRes != null) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .padding(end = 14.dp)
+                    .size(40.dp)
+                    .clip(SketchShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+            ) {
+                Icon(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+        Text(
+            title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            painter = painterResource(R.drawable.ic_arrow_down),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .padding(start = 6.dp)
+                .size(18.dp),
+        )
     }
 }
 
@@ -324,7 +433,7 @@ private fun SettingsDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(horizontal = 18.dp),
         thickness = 1.dp,
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+        color = MaterialTheme.colorScheme.background,
     )
 }
 

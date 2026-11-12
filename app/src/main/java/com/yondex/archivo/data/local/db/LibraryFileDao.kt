@@ -25,6 +25,15 @@ interface LibraryFileDao {
     @Query("UPDATE library_files SET title = :title WHERE id = :id")
     suspend fun rename(id: Long, title: String)
 
+    @Query(
+        """
+        UPDATE library_files
+        SET cover_path = :coverPath, page_count = :pageCount
+        WHERE id = :id
+        """,
+    )
+    suspend fun updateCover(id: Long, coverPath: String?, pageCount: Int)
+
     @Query("DELETE FROM library_files WHERE id = :id")
     suspend fun delete(id: Long)
 }

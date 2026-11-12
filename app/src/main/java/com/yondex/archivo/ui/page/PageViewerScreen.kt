@@ -372,7 +372,7 @@ private fun OcrTextSheet(
                     }
                     IconButton(onClick = { onShare(text) }) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_share),
+                            painter = painterResource(R.drawable.ic_export),
                             contentDescription = stringResource(R.string.action_share),
                         )
                     }
@@ -409,6 +409,12 @@ private fun OcrTextSheet(
                         }
                         Spacer(Modifier.width(8.dp))
                         SketchFilledButton(onClick = { onSave(draft); editing = false }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_save),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(Modifier.width(8.dp))
                             Text(stringResource(R.string.action_save))
                         }
                     }

@@ -51,11 +51,13 @@ fun PageFilter.label(): String = stringResource(
 )
 
 @Composable
-fun PdfPageSize.label(): String = when (this) {
-    PdfPageSize.A4 -> "A4"
-    PdfPageSize.LETTER -> "Letter"
-    PdfPageSize.FIT_IMAGE -> stringResource(R.string.page_size_fit)
-}
+fun PdfPageSize.label(): String = stringResource(
+    when (this) {
+        PdfPageSize.A4 -> R.string.page_size_a4
+        PdfPageSize.LETTER -> R.string.page_size_letter
+        PdfPageSize.FIT_IMAGE -> R.string.page_size_fit
+    },
+)
 
 @Composable
 fun ExportQuality.label(): String = stringResource(

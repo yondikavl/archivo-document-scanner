@@ -480,14 +480,12 @@ private fun PdfToolBar(
                     modifier = Modifier.weight(1f),
                 )
             }
-            if (hint != null) {
-                Text(
-                    hint,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
+            Text(
+                hint ?: stringResource(R.string.pdf_annotations_local_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
+            )
         }
     }
 }

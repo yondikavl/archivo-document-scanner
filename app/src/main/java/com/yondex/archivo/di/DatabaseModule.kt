@@ -24,7 +24,11 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): ArchivoDatabase =
         Room.databaseBuilder(context, ArchivoDatabase::class.java, ArchivoDatabase.NAME)
-            .addMigrations(ArchivoDatabase.MIGRATION_1_2, ArchivoDatabase.MIGRATION_2_3)
+            .addMigrations(
+                ArchivoDatabase.MIGRATION_1_2,
+                ArchivoDatabase.MIGRATION_2_3,
+                ArchivoDatabase.MIGRATION_3_4,
+            )
             .build()
 
     @Provides fun provideFolderDao(db: ArchivoDatabase): FolderDao = db.folderDao()

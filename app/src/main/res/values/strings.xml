@@ -12,6 +12,8 @@
     <string name="action_move">Move</string>
     <string name="action_share">Share</string>
     <string name="action_export">Export</string>
+    <string name="page_size_a4">A4</string>
+    <string name="page_size_letter">Letter</string>
     <string name="action_more">More</string>
     <string name="action_close">Close</string>
     <string name="action_search">Search</string>
@@ -47,15 +49,24 @@
     <string name="greeting_evening">Good evening</string>
     <string name="greeting_subtitle">Your documents, ready to go</string>
     <string name="import_file">Import file</string>
+    <string name="import_pdf">Import PDF</string>
     <string name="filter_all">All</string>
-    <string name="filter_scans">Scans</string>
+    <string name="filter_scans">Scan results</string>
     <string name="filter_pdf">PDF</string>
     <string name="recently_added">Recently added</string>
+    <string name="import_success_count">Imported %d PDF(s)</string>
+    <string name="delete_selection_title">Delete %d items?</string>
+    <string name="delete_selection_message">Selected documents and PDFs will be permanently removed.</string>
+    <string name="empty_scans_title">No scan results yet</string>
+    <string name="empty_scans_message">Capture pages with the camera to build a scan document.</string>
+    <string name="empty_pdf_title">No PDFs yet</string>
+    <string name="empty_pdf_message">Import a PDF to keep it in your library.</string>
+    <string name="search_pdf_label">PDF</string>
     <string name="section_files">Files</string>
     <string name="section_all_documents">All documents</string>
     <string name="view_more">View more</string>
     <string name="empty_home_title">Nothing here yet</string>
-    <string name="empty_home_message">Scan a page or import a PDF to get started.</string>
+    <string name="empty_home_message">Tap Scan in the bottom bar, or import a PDF to get started.</string>
     <string name="reader_open_failed">Could not open this file.</string>
     <string name="delete_library_file_title">Delete file?</string>
     <string name="delete_library_file_message">\"%1$s\" will be removed from Archivo.</string>
@@ -208,6 +219,7 @@
     <string name="section_scan">Scan</string>
     <string name="section_export_pdf">PDF export</string>
     <string name="section_about">About</string>
+    <string name="section_legal">Legal</string>
     <string name="language">Language</string>
     <string name="theme">Theme</string>
     <string name="theme_system">System</string>
@@ -222,6 +234,34 @@
     <string name="auto_ocr">Automatic OCR</string>
     <string name="auto_ocr_summary">Extract text from each page after saving</string>
     <string name="app_version">Version %1$s</string>
+    <string name="about_trust">100% offline · no account · no cloud</string>
+    <string name="about_trust_detail">Documents, PDFs, and annotations stay on this device.</string>
+    <string name="pdf_annotations_local_note">Highlights and comments are saved in Archivo, not written into the PDF file.</string>
+    <string name="yondex_name">Yondex</string>
+    <string name="yondex_copyright">© %1$d Yondex</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="terms_of_use">Terms of use</string>
+    <string name="privacy_policy_body">Archivo is designed to work entirely on your device.\n\n1. Data storage\nDocuments, page images, imported PDFs, OCR text, tags, folders, and PDF annotations are stored locally in Archivo’s private app storage and on-device database. We do not operate a cloud sync service for your files.\n\n2. No account\nArchivo does not require sign-in. We do not create user profiles or collect account credentials.\n\n3. Camera &amp; media\nCamera access is used only when you scan documents or QR/barcodes. Gallery/photo access is used only when you choose to import images or PDFs. Export uses the system share sheet, Storage Access Framework, or gallery APIs you trigger.\n\n4. Processing on device\nEdge detection, image processing, OCR, and barcode scanning run on your device (including on-device ML Kit / OpenCV components). Archivo does not upload scan content to Yondex servers for processing.\n\n5. Network\nOpening a scanned QR/barcode URL may use your network through the system browser or apps you choose. Archivo itself does not require an internet connection for core scanning and library features.\n\n6. Your control\nYou can delete documents, PDFs, tags, and folders in the app. Uninstalling Archivo removes its private app data (subject to your device/OS behavior).\n\n7. Contact\nFor privacy questions about Archivo, contact Yondex via the listing or support channel where you obtained the app.\n\nLast updated: November 2026</string>
+    <string name="terms_of_use_body">By using Archivo you agree to these terms.\n\n1. License\nYondex grants you a personal, non-exclusive, non-transferable license to install and use Archivo on devices you own or control, for lawful personal or internal business purposes.\n\n2. Acceptable use\nYou are responsible for content you scan, import, store, share, or export. Do not use Archivo to infringe others’ rights or break applicable laws.\n\n3. Offline product\nArchivo is provided as an offline-first tool. Features depend on your device capabilities (camera, storage, processing power). Availability of optional system features (share targets, gallery, dynamic color) may vary by Android version.\n\n4. No warranty\nArchivo is provided “as is” without warranties of any kind, to the fullest extent permitted by law, including merchantability, fitness for a particular purpose, and non-infringement. OCR and edge detection may be imperfect.\n\n5. Limitation of liability\nTo the fullest extent permitted by law, Yondex is not liable for indirect, incidental, special, consequential, or lost-data damages arising from use of Archivo. You should keep backups of important files.\n\n6. Third-party components\nArchivo uses third-party libraries (for example Android Jetpack, CameraX, OpenCV, ML Kit, Coil). Those components remain subject to their own licenses and terms.\n\n7. Changes\nWe may update these terms with app updates. Continued use after an update constitutes acceptance of the revised terms.\n\n8. Contact\nQuestions about these terms: contact Yondex via the listing or support channel where you obtained the app.\n\nLast updated: November 2026</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_start">Get started</string>
+    <string name="onboarding_auto_title">Auto-capture when steady</string>
+    <string name="onboarding_auto_body">Point at a page — Archivo detects edges and captures once the document is stable. Switch to Manual anytime.</string>
+    <string name="onboarding_library_title">Scan results and PDFs, one home</string>
+    <string name="onboarding_library_body">Camera captures go to Scan results. Imported PDFs live under PDF. Use All to see everything. The Scan tab starts a new capture.</string>
+    <string name="onboarding_offline_title">Private by design</string>
+    <string name="onboarding_offline_body">No account, no cloud. Your archive stays on this device — searchable offline with OCR.</string>
+    <string name="onboarding_agree_prefix">I agree to the</string>
+    <string name="onboarding_agree_and">and</string>
+    <string name="onboarding_agree_required">Please agree to continue</string>
+
+    <!-- Scan discard -->
+    <string name="discard_scan_title">Discard scan?</string>
+    <string name="discard_scan_message">You have %1$d unsaved page(s). Leaving now will discard them.</string>
+    <string name="action_discard">Discard</string>
 
     <!-- Merge / Split -->
     <string name="merge_title">Merge</string>

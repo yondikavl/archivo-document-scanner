@@ -11,7 +11,9 @@
     <string name="action_rename">Ganti nama</string>
     <string name="action_move">Pindahkan</string>
     <string name="action_share">Bagikan</string>
-    <string name="action_export">Export</string>
+    <string name="action_export">Ekspor</string>
+    <string name="page_size_a4">A4</string>
+    <string name="page_size_letter">Letter</string>
     <string name="action_more">Lainnya</string>
     <string name="action_close">Tutup</string>
     <string name="action_search">Cari</string>
@@ -27,7 +29,7 @@
     <string name="home_label">Beranda</string>
     <string name="nav_home">Beranda</string>
     <string name="nav_qr">QR</string>
-    <string name="nav_scan">Scan</string>
+    <string name="nav_scan">Pindai</string>
     <string name="nav_tags">Tag</string>
     <string name="nav_settings">Setelan</string>
     <string name="folder">Folder</string>
@@ -47,15 +49,24 @@
     <string name="greeting_evening">Selamat malam</string>
     <string name="greeting_subtitle">Dokumen Anda, siap digunakan</string>
     <string name="import_file">Impor file</string>
+    <string name="import_pdf">Impor PDF</string>
     <string name="filter_all">Semua</string>
-    <string name="filter_scans">Scan</string>
+    <string name="filter_scans">Hasil Scan</string>
     <string name="filter_pdf">PDF</string>
     <string name="recently_added">Baru ditambahkan</string>
+    <string name="import_success_count">%d PDF berhasil diimpor</string>
+    <string name="delete_selection_title">Hapus %d item?</string>
+    <string name="delete_selection_message">Dokumen dan PDF terpilih akan dihapus permanen.</string>
+    <string name="empty_scans_title">Belum ada hasil scan</string>
+    <string name="empty_scans_message">Ambil halaman dengan kamera untuk membuat dokumen scan.</string>
+    <string name="empty_pdf_title">Belum ada PDF</string>
+    <string name="empty_pdf_message">Impor PDF agar tersimpan di library Anda.</string>
+    <string name="search_pdf_label">PDF</string>
     <string name="section_files">File</string>
     <string name="section_all_documents">Semua dokumen</string>
     <string name="view_more">Lihat semua</string>
     <string name="empty_home_title">Belum ada apa-apa</string>
-    <string name="empty_home_message">Scan halaman atau impor file PDF untuk mulai.</string>
+    <string name="empty_home_message">Ketuk Pindai di bilah bawah, atau impor PDF untuk mulai.</string>
     <string name="reader_open_failed">File tidak dapat dibuka.</string>
     <string name="delete_library_file_title">Hapus file?</string>
     <string name="delete_library_file_message">\"%1$s\" akan dihapus dari Archivo.</string>
@@ -161,15 +172,15 @@
     <string name="ocr_started">OCR dijalankan di latar belakang</string>
     <string name="file_saved">File tersimpan</string>
     <string name="images_saved_gallery">%d gambar disimpan ke Galeri › Pictures/Archivo</string>
-    <string name="export_failed">Export gagal: %1$s</string>
-    <string name="export_document">Export dokumen</string>
+    <string name="export_failed">Ekspor gagal: %1$s</string>
+    <string name="export_document">Ekspor dokumen</string>
     <string name="format">Format</string>
     <string name="page_size">Ukuran halaman</string>
     <string name="quality">Kualitas</string>
     <string name="export_txt_hint">Berisi teks hasil OCR dari semua halaman.</string>
     <string name="to_gallery">Ke Galeri</string>
     <string name="format_text">Teks</string>
-    <string name="page_size_fit">Ikuti gambar</string>
+    <string name="page_size_fit">Sesuai gambar</string>
     <string name="quality_low">Rendah</string>
     <string name="quality_medium">Sedang</string>
     <string name="quality_high">Tinggi</string>
@@ -206,8 +217,9 @@
     <string name="settings">Pengaturan</string>
     <string name="section_appearance">Tampilan</string>
     <string name="section_scan">Scan</string>
-    <string name="section_export_pdf">Export PDF</string>
+    <string name="section_export_pdf">Ekspor PDF</string>
     <string name="section_about">Tentang</string>
+    <string name="section_legal">Legal</string>
     <string name="language">Bahasa</string>
     <string name="theme">Tema</string>
     <string name="theme_system">Ikuti sistem</string>
@@ -222,6 +234,34 @@
     <string name="auto_ocr">OCR otomatis</string>
     <string name="auto_ocr_summary">Ekstrak teks setiap halaman setelah disimpan</string>
     <string name="app_version">Versi %1$s</string>
+    <string name="about_trust">100% offline · tanpa akun · tanpa cloud</string>
+    <string name="about_trust_detail">Dokumen, PDF, dan anotasi tetap di perangkat ini.</string>
+    <string name="pdf_annotations_local_note">Highlight dan komentar disimpan di Archivo, tidak ditulis ke file PDF.</string>
+    <string name="yondex_name">Yondex</string>
+    <string name="yondex_copyright">© %1$d Yondex</string>
+    <string name="privacy_policy">Kebijakan privasi</string>
+    <string name="terms_of_use">Syarat penggunaan</string>
+    <string name="privacy_policy_body">Archivo dirancang untuk bekerja sepenuhnya di perangkat Anda.\n\n1. Penyimpanan data\nDokumen, gambar halaman, PDF impor, teks OCR, tag, folder, dan anotasi PDF disimpan secara lokal di penyimpanan privat aplikasi serta basis data di perangkat. Kami tidak mengoperasikan layanan sinkronisasi cloud untuk file Anda.\n\n2. Tanpa akun\nArchivo tidak mewajibkan masuk akun. Kami tidak membuat profil pengguna atau mengumpulkan kredensial akun.\n\n3. Kamera &amp; media\nAkses kamera hanya dipakai saat Anda memindai dokumen atau QR/barcode. Akses galeri/foto hanya dipakai saat Anda memilih mengimpor gambar atau PDF. Ekspor memakai bagikan sistem, Storage Access Framework, atau API galeri yang Anda picu sendiri.\n\n4. Pemrosesan di perangkat\nDeteksi tepi, pemrosesan gambar, OCR, dan pemindaian barcode berjalan di perangkat Anda (termasuk komponen ML Kit / OpenCV on-device). Archivo tidak mengunggah isi scan ke server Yondex untuk diproses.\n\n5. Jaringan\nMembuka tautan dari hasil QR/barcode dapat memakai jaringan melalui peramban atau aplikasi yang Anda pilih. Archivo sendiri tidak membutuhkan internet untuk fitur inti scan dan library.\n\n6. Kendali Anda\nAnda dapat menghapus dokumen, PDF, tag, dan folder di dalam aplikasi. Menghapus instalasi Archivo menghapus data privat aplikasinya (tergantung perilaku perangkat/OS).\n\n7. Kontak\nUntuk pertanyaan privasi tentang Archivo, hubungi Yondex melalui listing atau saluran dukungan tempat Anda memperoleh aplikasi.\n\nTerakhir diperbarui: November 2026</string>
+    <string name="terms_of_use_body">Dengan menggunakan Archivo, Anda menyetujui syarat berikut.\n\n1. Lisensi\nYondex memberikan lisensi pribadi, non-eksklusif, dan tidak dapat dipindahtangankan untuk memasang serta memakai Archivo di perangkat yang Anda miliki atau kendalikan, untuk keperluan pribadi atau internal yang sah.\n\n2. Penggunaan yang dapat diterima\nAnda bertanggung jawab atas konten yang Anda pindai, impor, simpan, bagikan, atau ekspor. Jangan memakai Archivo untuk melanggar hak pihak lain atau hukum yang berlaku.\n\n3. Produk offline\nArchivo disediakan sebagai alat offline-first. Fitur bergantung pada kemampuan perangkat (kamera, penyimpanan, daya proses). Ketersediaan fitur sistem opsional (target bagikan, galeri, warna dinamis) dapat berbeda antar versi Android.\n\n4. Tanpa jaminan\nArchivo disediakan “sebagaimana adanya” tanpa jaminan apa pun sejauh diizinkan hukum, termasuk kelayakan jual, kesesuaian untuk tujuan tertentu, dan non-pelanggaran. OCR dan deteksi tepi dapat tidak sempurna.\n\n5. Batasan tanggung jawab\nSejauh diizinkan hukum, Yondex tidak bertanggung jawab atas kerugian tidak langsung, insidental, khusus, konsekuensial, atau kehilangan data akibat penggunaan Archivo. Anda sebaiknya menyimpan cadangan file penting.\n\n6. Komponen pihak ketiga\nArchivo memakai pustaka pihak ketiga (misalnya Android Jetpack, CameraX, OpenCV, ML Kit, Coil). Komponen tersebut tetap tunduk pada lisensi dan syarat masing-masing.\n\n7. Perubahan\nKami dapat memperbarui syarat ini bersama pembaruan aplikasi. Penggunaan berkelanjutan setelah pembaruan berarti Anda menerima syarat yang diperbarui.\n\n8. Kontak\nPertanyaan tentang syarat ini: hubungi Yondex melalui listing atau saluran dukungan tempat Anda memperoleh aplikasi.\n\nTerakhir diperbarui: November 2026</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Lewati</string>
+    <string name="onboarding_next">Lanjut</string>
+    <string name="onboarding_start">Mulai</string>
+    <string name="onboarding_auto_title">Auto-capture saat stabil</string>
+    <string name="onboarding_auto_body">Arahkan ke halaman — Archivo mendeteksi tepi dan mengambil gambar saat dokumen stabil. Bisa diganti ke Manual kapan saja.</string>
+    <string name="onboarding_library_title">Hasil Scan dan PDF di satu tempat</string>
+    <string name="onboarding_library_body">Hasil kamera masuk ke Hasil Scan. PDF impor ada di filter PDF. Pakai Semua untuk melihat semuanya. Tab Pindai memulai pengambilan baru.</string>
+    <string name="onboarding_offline_title">Privat sejak awal</string>
+    <string name="onboarding_offline_body">Tanpa akun, tanpa cloud. Arsip Anda tetap di perangkat — bisa dicari offline lewat OCR.</string>
+    <string name="onboarding_agree_prefix">Saya setuju dengan</string>
+    <string name="onboarding_agree_and">dan</string>
+    <string name="onboarding_agree_required">Setujui dulu untuk melanjutkan</string>
+
+    <!-- Scan discard -->
+    <string name="discard_scan_title">Buang hasil scan?</string>
+    <string name="discard_scan_message">Ada %1$d halaman belum disimpan. Keluar sekarang akan membuangnya.</string>
+    <string name="action_discard">Buang</string>
 
     <!-- Merge / Split -->
     <string name="merge_title">Gabungkan</string>

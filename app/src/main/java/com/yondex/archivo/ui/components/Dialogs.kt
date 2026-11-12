@@ -19,7 +19,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Add
-import androidx.compose.material.icons.sharp.Folder
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -165,7 +164,10 @@ private fun FolderRow(name: String, depth: Int, isRoot: Boolean, selected: Boole
                 contentDescription = null,
             )
         } else {
-            Icon(Icons.Sharp.Folder, contentDescription = null)
+            Icon(
+                painter = painterResource(R.drawable.ic_folder),
+                contentDescription = null,
+            )
         }
         Spacer(Modifier.width(12.dp))
         Text(name, modifier = Modifier.weight(1f))

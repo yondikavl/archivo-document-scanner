@@ -143,7 +143,7 @@ fun DocumentScreen(
                 actions = {
                     IconButton(onClick = { dialog = DocumentDialog.EXPORT }, enabled = state.pages.isNotEmpty()) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_share),
+                            painter = painterResource(R.drawable.ic_export),
                             contentDescription = stringResource(R.string.action_export),
                         )
                     }

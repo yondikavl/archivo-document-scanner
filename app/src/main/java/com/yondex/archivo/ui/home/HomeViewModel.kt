@@ -1,10 +1,12 @@
 package com.yondex.archivo.ui.home
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.yondex.archivo.R
 import com.yondex.archivo.data.local.prefs.SettingsRepository
 import com.yondex.archivo.data.repository.DocumentRepository
 import com.yondex.archivo.data.repository.FolderRepository
@@ -23,6 +25,7 @@ import com.yondex.archivo.domain.model.ViewMode
 import com.yondex.archivo.ui.navigation.HomeRoute
 import com.yondex.archivo.ui.navigation.NO_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -58,7 +61,9 @@ data class HomeUiState(
     val selectedPdfs: List<LibraryFile> get() = libraryFiles.filter { it.id in pdfSelection }
     val selectionCount: Int get() = selection.size + pdfSelection.size
     val canMerge: Boolean get() = selectionCount >= 2
-    val recentLibrary: LibraryFile? get() = libraryFiles.maxByOrNull { it.openedAt }
+    val canDeleteSelection: Boolean get() = selection.isNotEmpty() || pdfSelection.isNotEmpty()
+    /** Newest imported PDF by created time — not last opened. */
+    val recentLibrary: LibraryFile? get() = libraryFiles.maxByOrNull { it.createdAt }
 }
 
 private data class LocalState(
@@ -71,6 +76,7 @@ private data class LocalState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
+    @ApplicationContext private val context: Context,
     private val documentRepository: DocumentRepository,
     private val folderRepository: FolderRepository,
     private val tagRepository: TagRepository,
@@ -82,8 +88,6 @@ class HomeViewModel @Inject constructor(
     private val local = MutableStateFlow(LocalState())
     private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 2)
     val messages: SharedFlow<String> = _messages
-    private val _imported = MutableSharedFlow<LibraryFile>(extraBufferCapacity = 1)
-    val imported: SharedFlow<LibraryFile> = _imported
 
     val uiState: StateFlow<HomeUiState> = combine(
         documentRepository.observeDocuments(),
@@ -126,8 +130,15 @@ class HomeViewModel @Inject constructor(
             HomeFilter.ALL, HomeFilter.SCANS -> sortedDocs
             HomeFilter.PDF -> emptyList()
         }
+        val pdfs = library.filter { it.type == LibraryFileType.PDF }
+        val sortedLibrary = when (settings.sortOrder) {
+            SortOrder.UPDATED_DESC -> pdfs.sortedByDescending { it.openedAt }
+            SortOrder.CREATED_DESC -> pdfs.sortedByDescending { it.createdAt }
+            SortOrder.NAME_ASC -> pdfs.sortedBy { it.title.lowercase() }
+            SortOrder.PAGES_DESC -> pdfs.sortedByDescending { it.pageCount }
+        }
         val filteredLibrary = when (local.filter) {
-            HomeFilter.ALL, HomeFilter.PDF -> library.filter { it.type == LibraryFileType.PDF }
+            HomeFilter.ALL, HomeFilter.PDF -> sortedLibrary
             HomeFilter.SCANS -> emptyList()
         }
         val visibleIds = filteredDocs.map { it.id }.toSet()
@@ -187,7 +198,16 @@ class HomeViewModel @Inject constructor(
 
     fun mergeLibraryIds(): String = uiState.value.pdfSelection.joinToString(",")
 
-    fun deleteSelected() = launchWithSelection { documentRepository.delete(it) }
+    fun deleteSelected() {
+        val docIds = uiState.value.selection.toList()
+        val pdfIds = uiState.value.pdfSelection.toList()
+        if (docIds.isEmpty() && pdfIds.isEmpty()) return
+        clearSelection()
+        viewModelScope.launch {
+            if (docIds.isNotEmpty()) documentRepository.delete(docIds)
+            pdfIds.forEach { libraryRepository.delete(it) }
+        }
+    }
 
     fun moveSelected(targetFolderId: Long?) = launchWithSelection { documentRepository.moveToFolder(it, targetFolderId) }
 
@@ -210,10 +230,15 @@ class HomeViewModel @Inject constructor(
     fun setSortOrder(order: SortOrder) = viewModelScope.launch { settingsRepository.setSortOrder(order) }
 
     fun importFiles(uris: List<Uri>) = viewModelScope.launch {
+        if (uris.isEmpty()) return@launch
+        var imported = 0
         uris.forEach { uri ->
             runCatching { libraryRepository.import(uri) }
-                .onSuccess { _imported.emit(it) }
-                .onFailure { _messages.emit(it.message ?: "Import failed") }
+                .onSuccess { imported++ }
+                .onFailure { _messages.emit(it.message ?: context.getString(R.string.reader_open_failed)) }
+        }
+        if (imported > 0) {
+            _messages.emit(context.getString(R.string.import_success_count, imported))
         }
     }
 

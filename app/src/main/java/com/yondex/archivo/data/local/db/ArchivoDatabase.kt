@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         LibraryFileEntity::class,
         PdfAnnotationEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class ArchivoDatabase : RoomDatabase() {
@@ -75,6 +75,13 @@ abstract class ArchivoDatabase : RoomDatabase() {
                 db.execSQL(
                     "CREATE INDEX IF NOT EXISTS index_pdf_annotations_library_file_id_page_index ON pdf_annotations(library_file_id, page_index)",
                 )
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE library_files ADD COLUMN cover_path TEXT")
+                db.execSQL("ALTER TABLE library_files ADD COLUMN page_count INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

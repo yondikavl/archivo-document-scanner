@@ -37,11 +37,6 @@ data class Page(
     val ocrStatus: OcrStatus,
 )
 
-data class SearchResult(
-    val document: Document,
-    val snippet: String?,
-)
-
 enum class PageFilter { ORIGINAL, ENHANCE, GRAYSCALE, BLACK_WHITE }
 
 enum class OcrStatus { NONE, PENDING, RUNNING, DONE, FAILED }
@@ -64,7 +59,14 @@ data class LibraryFile(
     val sizeBytes: Long,
     val createdAt: Long,
     val openedAt: Long,
+    val coverPath: String? = null,
+    val pageCount: Int = 0,
 )
+
+sealed interface SearchResult {
+    data class DocumentHit(val document: Document, val snippet: String?) : SearchResult
+    data class PdfHit(val file: LibraryFile) : SearchResult
+}
 
 enum class PdfAnnotationType { HIGHLIGHT, COMMENT }
 
@@ -103,4 +105,5 @@ data class AppSettings(
     val autoOcr: Boolean = true,
     val viewMode: ViewMode = ViewMode.GRID,
     val sortOrder: SortOrder = SortOrder.UPDATED_DESC,
+    val onboardingDone: Boolean = false,
 )

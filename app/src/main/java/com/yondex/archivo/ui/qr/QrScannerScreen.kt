@@ -33,8 +33,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Close
 import androidx.compose.material.icons.sharp.ContentCopy
-import androidx.compose.material.icons.sharp.FlashOff
-import androidx.compose.material.icons.sharp.FlashOn
 import androidx.compose.material.icons.sharp.Link
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -246,7 +244,9 @@ private fun TopBar(
         )
         IconButton(onClick = onToggleTorch) {
             Icon(
-                if (torchOn) Icons.Sharp.FlashOn else Icons.Sharp.FlashOff,
+                painter = painterResource(
+                    if (torchOn) R.drawable.ic_flash_on else R.drawable.ic_flash_off,
+                ),
                 contentDescription = stringResource(R.string.flash),
                 tint = Color.White,
             )
@@ -318,7 +318,7 @@ private fun ResultSheet(
                 }
                 SketchOutlinedButton(onClick = onShare, modifier = Modifier.weight(1f), fillWidth = true) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_share),
+                        painter = painterResource(R.drawable.ic_export),
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
                     )

@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yondex.archivo.data.repository.DocumentRepository
 import com.yondex.archivo.data.repository.FolderRepository
+import com.yondex.archivo.data.repository.LibraryRepository
 import com.yondex.archivo.data.repository.TagRepository
 import com.yondex.archivo.domain.model.Folder
+import com.yondex.archivo.domain.model.LibraryFile
+import com.yondex.archivo.domain.model.LibraryFileType
 import com.yondex.archivo.domain.model.SearchResult
 import com.yondex.archivo.domain.model.Tag
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +34,7 @@ data class SearchUiState(
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     private val documentRepository: DocumentRepository,
+    private val libraryRepository: LibraryRepository,
     folderRepository: FolderRepository,
     tagRepository: TagRepository,
 ) : ViewModel() {
@@ -53,18 +57,37 @@ class SearchViewModel @Inject constructor(
     val uiState: StateFlow<SearchUiState> = combine(
         _query.debounce(250),
         documentRepository.observeDocuments(),
+        libraryRepository.observeAll(),
         _folderFilter,
         _tagFilter,
-    ) { query, documents, folderId, tagIds -> SearchParams(query.trim(), documents, folderId, tagIds) }
+    ) { query, documents, library, folderId, tagIds ->
+        SearchParams(query.trim(), documents, library, folderId, tagIds)
+    }
         .mapLatest { params ->
             if (params.query.isEmpty()) return@mapLatest SearchUiState()
             val byId = params.documents.associateBy { it.id }
-            val results = documentRepository.search(params.query).mapNotNull { (id, snippet) ->
+            val documentHits = documentRepository.search(params.query).mapNotNull { (id, snippet) ->
                 val document = byId[id] ?: return@mapNotNull null
                 if (params.folderId != null && document.folderId != params.folderId) return@mapNotNull null
                 if (!document.tags.map { it.id }.containsAll(params.tagIds)) return@mapNotNull null
-                SearchResult(document, snippet)
-            }.sortedByDescending { it.document.updatedAt }
+                SearchResult.DocumentHit(document, snippet)
+            }
+            // PDFs have no folder/tags — include only when those filters are inactive.
+            val pdfHits = if (params.folderId == null && params.tagIds.isEmpty()) {
+                params.library
+                    .filter { it.type == LibraryFileType.PDF }
+                    .filter { it.title.contains(params.query, ignoreCase = true) }
+                    .sortedByDescending { it.createdAt }
+                    .map { SearchResult.PdfHit(it) }
+            } else {
+                emptyList()
+            }
+            val results = (documentHits + pdfHits).sortedByDescending { hit ->
+                when (hit) {
+                    is SearchResult.DocumentHit -> hit.document.updatedAt
+                    is SearchResult.PdfHit -> hit.file.createdAt
+                }
+            }
             SearchUiState(hasQuery = true, results = results)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SearchUiState())
@@ -82,6 +105,7 @@ class SearchViewModel @Inject constructor(
     private data class SearchParams(
         val query: String,
         val documents: List<com.yondex.archivo.domain.model.Document>,
+        val library: List<LibraryFile>,
         val folderId: Long?,
         val tagIds: Set<Long>,
     )
