@@ -57,6 +57,7 @@ import com.yondex.archivo.ui.components.SketchFilledButton
 import com.yondex.archivo.ui.components.SketchOutlinedButton
 import com.yondex.archivo.ui.components.SketchShape
 import com.yondex.archivo.ui.components.SketchShapeLarge
+import com.yondex.archivo.ui.components.SketchSheetDragHandle
 import com.yondex.archivo.ui.label
 import com.yondex.archivo.ui.legal.LegalDocument
 import com.yondex.archivo.ui.legal.LegalDocumentSheet
@@ -83,6 +84,11 @@ fun OnboardingScreen(
             bodyRes = R.string.onboarding_auto_body,
         ),
         OnboardingPage(
+            iconRes = R.drawable.ic_scanner,
+            titleRes = R.string.onboarding_camera_title,
+            bodyRes = R.string.onboarding_camera_body,
+        ),
+        OnboardingPage(
             iconRes = R.drawable.ic_document,
             titleRes = R.string.onboarding_library_title,
             bodyRes = R.string.onboarding_library_body,
@@ -102,7 +108,7 @@ fun OnboardingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color.Transparent)
             .statusBarsPadding()
             .navigationBarsPadding()
             .padding(horizontal = 24.dp, vertical = 16.dp),
@@ -296,7 +302,7 @@ private fun <T> PreferenceIconButton(
             shape = SketchShapeLarge,
             containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 0.dp,
-            dragHandle = null,
+            dragHandle = { SketchSheetDragHandle() },
         ) {
             Column(
                 Modifier

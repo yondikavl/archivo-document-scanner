@@ -1,0 +1,38 @@
+<!--
+  ~ Copyright (C) 2026 The Android Open Source Project
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:pathData="M12,1.25C12.41,1.25 12.75,1.59 12.75,2L12.75,4C12.75,4.41 12.41,4.75 12,4.75C11.59,4.75 11.25,4.41 11.25,4L11.25,2C11.25,1.59 11.59,1.25 12,1.25Z"
+      android:fillColor="#292D32"/>
+  <path
+      android:pathData="M12,5.25C12.41,5.25 12.75,5.59 12.75,6L12.75,8C12.75,8.41 12.41,8.75 12,8.75C11.59,8.75 11.25,8.41 11.25,8L11.25,6C11.25,5.59 11.59,5.25 12,5.25Z"
+      android:fillColor="#292D32"/>
+  <path
+      android:pathData="M12,9.25C12.41,9.25 12.75,9.59 12.75,10L12.75,13C12.75,17.27 9.27,20.75 5,20.75L2,20.75C1.59,20.75 1.25,20.41 1.25,20C1.25,19.59 1.59,19.25 2,19.25L5,19.25C8.45,19.25 11.25,16.45 11.25,13L11.25,10C11.25,9.59 11.59,9.25 12,9.25Z"
+      android:fillColor="#292D32"/>
+  <path
+      android:pathData="M12,9.25C12.41,9.25 12.75,9.59 12.75,10L12.75,13C12.75,16.45 15.55,19.25 19,19.25L22,19.25C22.41,19.25 22.75,19.59 22.75,20C22.75,20.41 22.41,20.75 22,20.75L19,20.75C14.73,20.75 11.25,17.27 11.25,13L11.25,10C11.25,9.59 11.59,9.25 12,9.25Z"
+      android:strokeAlpha="0.4"
+      android:fillColor="#292D32"
+      android:fillAlpha="0.4"/>
+  <path
+      android:pathData="M9.001,3.748C9.001,3.558 9.077,3.368 9.241,3.217L11.423,1.217C11.74,0.928 12.264,0.928 12.58,1.217L14.763,3.217C15.079,3.507 15.079,3.988 14.763,4.278C14.446,4.568 13.922,4.568 13.606,4.278L12.002,2.808L10.397,4.278C10.081,4.568 9.557,4.568 9.241,4.278C9.077,4.128 9.001,3.938 9.001,3.748Z"
+      android:fillColor="#292D32"/>
+</vector>

@@ -72,6 +72,8 @@ import com.yondex.archivo.domain.model.Page
 import com.yondex.archivo.ui.components.ConfirmDialog
 import com.yondex.archivo.ui.components.SketchFilledButton
 import com.yondex.archivo.ui.components.SketchInk
+import com.yondex.archivo.ui.components.SketchShapeLarge
+import com.yondex.archivo.ui.components.SketchSheetDragHandle
 import com.yondex.archivo.ui.components.SketchStroke
 import com.yondex.archivo.ui.components.sketchBorder
 
@@ -349,10 +351,10 @@ private fun OcrTextSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        shape = RectangleShape,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        shape = SketchShapeLarge,
+        containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp,
-        dragHandle = null,
+        dragHandle = { SketchSheetDragHandle() },
     ) {
         Column(
             Modifier

@@ -118,6 +118,7 @@ fun ArchivoTheme(
         colorScheme = colorScheme,
         typography = Typography,
         shapes = ArchivoShapes,
-        content = content,
-    )
+    ) {
+        ArchivoDottedBackground(content = { content() })
+    }
 }

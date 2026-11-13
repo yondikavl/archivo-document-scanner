@@ -1,7 +1,10 @@
 package com.yondex.archivo.ui.scanner
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -116,9 +119,6 @@ fun ScannerScreen(
     BackHandler(onBack = ::requestClose)
 
     LaunchedEffect(Unit) {
-        if (!hasPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
-    }
-    LaunchedEffect(Unit) {
         viewModel.messages.collect { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
     }
 
@@ -138,6 +138,13 @@ fun ScannerScreen(
         } else {
             PermissionRationale(
                 onRequest = { permissionLauncher.launch(Manifest.permission.CAMERA) },
+                onOpenSettings = {
+                    context.startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", context.packageName, null)
+                        },
+                    )
+                },
                 onGallery = {
                     galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
@@ -395,6 +402,7 @@ private fun DetectionOverlay(detection: LiveDetection?, stability: Float, modifi
 @Composable
 private fun PermissionRationale(
     onRequest: () -> Unit,
+    onOpenSettings: () -> Unit,
     onGallery: () -> Unit,
     onClose: () -> Unit,
     onReview: (() -> Unit)?,
@@ -420,6 +428,7 @@ private fun PermissionRationale(
             )
             Spacer(Modifier.height(24.dp))
             SketchFilledButton(onClick = onRequest) { Text(stringResource(R.string.allow_camera)) }
+            TextButton(onClick = onOpenSettings) { Text(stringResource(R.string.open_settings)) }
             TextButton(onClick = onGallery) { Text(stringResource(R.string.import_gallery)) }
             if (onReview != null) TextButton(onClick = onReview) { Text(stringResource(R.string.continue_review)) }
             TextButton(onClick = onClose) { Text(stringResource(R.string.action_close)) }

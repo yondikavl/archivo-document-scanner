@@ -22,6 +22,8 @@ import com.yondex.archivo.domain.model.LibraryFileType
 import com.yondex.archivo.domain.model.SortOrder
 import com.yondex.archivo.domain.model.Tag
 import com.yondex.archivo.domain.model.ViewMode
+import com.yondex.archivo.data.repository.formatFileSize
+import com.yondex.archivo.pdf.PdfCompressor
 import com.yondex.archivo.ui.navigation.HomeRoute
 import com.yondex.archivo.ui.navigation.NO_ID
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +33,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -38,6 +41,15 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class FolderEntry(val folder: Folder, val documentCount: Int)
+
+enum class PdfFeaturePurpose { READ, SPLIT, COMPRESS, MERGE }
+
+sealed interface HomeEvent {
+    data class OpenPdf(val id: Long) : HomeEvent
+    data class SplitPdf(val id: Long) : HomeEvent
+    data class MergePdfs(val libraryFileIds: String) : HomeEvent
+    data class CompressPdf(val file: LibraryFile) : HomeEvent
+}
 
 data class HomeUiState(
     val isLoading: Boolean = true,
@@ -88,6 +100,10 @@ class HomeViewModel @Inject constructor(
     private val local = MutableStateFlow(LocalState())
     private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 2)
     val messages: SharedFlow<String> = _messages
+    private val _events = MutableSharedFlow<HomeEvent>(extraBufferCapacity = 2)
+    val events: SharedFlow<HomeEvent> = _events
+    private val _compressing = MutableStateFlow(false)
+    val compressing: StateFlow<Boolean> = _compressing.asStateFlow()
 
     val uiState: StateFlow<HomeUiState> = combine(
         documentRepository.observeDocuments(),
@@ -242,11 +258,62 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun importForFeature(uris: List<Uri>, purpose: PdfFeaturePurpose) = viewModelScope.launch {
+        if (uris.isEmpty()) return@launch
+        val imported = mutableListOf<LibraryFile>()
+        uris.forEach { uri ->
+            runCatching { libraryRepository.import(uri) }
+                .onSuccess { imported += it }
+                .onFailure { _messages.emit(it.message ?: context.getString(R.string.reader_open_failed)) }
+        }
+        if (imported.isEmpty()) return@launch
+        when (purpose) {
+            PdfFeaturePurpose.READ -> _events.emit(HomeEvent.OpenPdf(imported.first().id))
+            PdfFeaturePurpose.SPLIT -> _events.emit(HomeEvent.SplitPdf(imported.first().id))
+            PdfFeaturePurpose.COMPRESS -> _events.emit(HomeEvent.CompressPdf(imported.first()))
+            PdfFeaturePurpose.MERGE -> {
+                if (imported.size < 2) {
+                    _messages.emit(context.getString(R.string.feature_merge_need_two))
+                    return@launch
+                }
+                _events.emit(HomeEvent.MergePdfs(imported.joinToString(",") { it.id.toString() }))
+            }
+        }
+    }
+
     fun renameLibraryFile(id: Long, title: String) = viewModelScope.launch {
         libraryRepository.rename(id, title)
     }
 
     fun deleteLibraryFile(id: Long) = viewModelScope.launch { libraryRepository.delete(id) }
+
+    fun compressLibraryFile(id: Long, maxBytes: Long = PdfCompressor.TARGET_100KB) = viewModelScope.launch {
+        if (_compressing.value) return@launch
+        val file = libraryRepository.get(id) ?: return@launch
+        if (file.sizeBytes in 1..maxBytes) {
+            _messages.emit(context.getString(R.string.compress_already_small))
+            return@launch
+        }
+        _compressing.value = true
+        runCatching {
+            libraryRepository.compressPdf(id, maxBytes)
+        }.onSuccess { (_, result) ->
+            _messages.emit(
+                if (result.metTarget) {
+                    context.getString(R.string.compress_success, formatFileSize(result.bytes))
+                } else {
+                    context.getString(
+                        R.string.compress_success_near,
+                        formatFileSize(result.bytes),
+                        formatFileSize(maxBytes),
+                    )
+                },
+            )
+        }.onFailure { e ->
+            _messages.emit(context.getString(R.string.compress_failed, e.message ?: "unknown"))
+        }
+        _compressing.value = false
+    }
 
     private fun launchWithSelection(block: suspend (List<Long>) -> Unit) {
         val ids = uiState.value.selection.toList()

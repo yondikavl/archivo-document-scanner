@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -115,10 +116,6 @@ fun QrScannerScreen(onClose: () -> Unit) {
         }
     }
 
-    LaunchedEffect(Unit) {
-        if (!hasPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
-    }
-
     DisposableEffect(Unit) {
         onDispose {
             cameraController.clearImageAnalysisAnalyzer()
@@ -165,6 +162,13 @@ fun QrScannerScreen(onClose: () -> Unit) {
         when {
             !hasPermission -> PermissionPane(
                 onRequest = { permissionLauncher.launch(Manifest.permission.CAMERA) },
+                onOpenSettings = {
+                    context.startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", context.packageName, null)
+                        },
+                    )
+                },
                 onClose = onClose,
             )
             else -> {
@@ -347,7 +351,11 @@ private fun ResultSheet(
 }
 
 @Composable
-private fun PermissionPane(onRequest: () -> Unit, onClose: () -> Unit) {
+private fun PermissionPane(
+    onRequest: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onClose: () -> Unit,
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -378,6 +386,9 @@ private fun PermissionPane(onRequest: () -> Unit, onClose: () -> Unit) {
         Spacer(Modifier.height(24.dp))
         SketchFilledButton(onClick = onRequest) {
             Text(stringResource(R.string.allow_camera))
+        }
+        TextButton(onClick = onOpenSettings) {
+            Text(stringResource(R.string.open_settings), color = Color.White)
         }
         TextButton(onClick = onClose) {
             Text(stringResource(R.string.action_close), color = Color.White)

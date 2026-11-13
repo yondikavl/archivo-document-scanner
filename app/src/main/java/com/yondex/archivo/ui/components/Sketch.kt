@@ -69,6 +69,21 @@ val SketchItemGap = 12.dp
 val SketchSectionGap = 16.dp
 val SketchChipGap = 10.dp
 
+/** Drag indicator for modal bottom sheets. */
+@Composable
+fun SketchSheetDragHandle(modifier: Modifier = Modifier) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier.fillMaxWidth().padding(top = 10.dp, bottom = 6.dp),
+    ) {
+        Box(
+            Modifier
+                .size(width = 40.dp, height = 4.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant, SketchShapePill),
+        )
+    }
+}
+
 /** No-op — modern UI is borderless. */
 @Suppress("UNUSED_PARAMETER")
 fun Modifier.sketchBorder(

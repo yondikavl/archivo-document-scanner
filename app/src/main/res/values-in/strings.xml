@@ -25,6 +25,7 @@
     <string name="action_select_all">Pilih semua</string>
     <string name="action_undo">Urungkan</string>
     <string name="action_redo">Ulangi</string>
+    <string name="action_retry">Coba lagi</string>
     <string name="cd_selected">Dipilih</string>
     <string name="home_label">Beranda</string>
     <string name="nav_home">Beranda</string>
@@ -48,6 +49,17 @@
     <string name="greeting_afternoon">Selamat siang</string>
     <string name="greeting_evening">Selamat malam</string>
     <string name="greeting_subtitle">Dokumen Anda, siap digunakan</string>
+    <string name="feature_tools">Fitur unggulan</string>
+    <string name="feature_scan">Scan</string>
+    <string name="feature_scan_desc">Ambil halaman</string>
+    <string name="feature_read_pdf">Baca PDF</string>
+    <string name="feature_read_pdf_desc">Buka &amp; lihat</string>
+    <string name="feature_merge_split">Gabung / Pisah</string>
+    <string name="feature_merge_split_desc">Gabungkan atau ekstrak</string>
+    <string name="feature_compress">Kompres</string>
+    <string name="feature_compress_desc">Perkecil ukuran PDF</string>
+    <string name="feature_pick_pdf">Pilih PDF</string>
+    <string name="feature_merge_need_two">Pilih minimal 2 PDF untuk digabung</string>
     <string name="import_file">Impor file</string>
     <string name="import_pdf">Impor PDF</string>
     <string name="filter_all">Semua</string>
@@ -122,6 +134,7 @@
     <string name="camera_permission_title">Izin kamera diperlukan</string>
     <string name="camera_permission_message">Archivo membutuhkan akses kamera untuk memindai dokumen. Anda tetap bisa mengimpor foto dari galeri.</string>
     <string name="allow_camera">Izinkan kamera</string>
+    <string name="open_settings">Buka pengaturan</string>
     <string name="continue_review">Lanjut ke tinjauan</string>
     <string name="error_capture">Gagal mengambil foto</string>
     <string name="error_import">Gagal mengimpor gambar</string>
@@ -250,6 +263,8 @@
     <string name="onboarding_start">Mulai</string>
     <string name="onboarding_auto_title">Auto-capture saat stabil</string>
     <string name="onboarding_auto_body">Arahkan ke halaman — Archivo mendeteksi tepi dan mengambil gambar saat dokumen stabil. Bisa diganti ke Manual kapan saja.</string>
+    <string name="onboarding_camera_title">Akses kamera</string>
+    <string name="onboarding_camera_body">Archivo membutuhkan kamera untuk memindai halaman dan kode QR. Anda tetap bisa impor dari galeri — izinkan akses saat diminta di scan pertama.</string>
     <string name="onboarding_library_title">Hasil Scan dan PDF di satu tempat</string>
     <string name="onboarding_library_body">Hasil kamera masuk ke Hasil Scan. PDF impor ada di filter PDF. Pakai Semua untuk melihat semuanya. Tab Pindai memulai pengambilan baru.</string>
     <string name="onboarding_offline_title">Privat sejak awal</string>
@@ -276,6 +291,20 @@
     <string name="split_mode_one">Satu dokumen</string>
     <string name="split_mode_each">Tiap halaman</string>
     <string name="split_remove_from_source">Hapus halaman dari dokumen asli</string>
+
+    <!-- Compress PDF -->
+    <string name="compress_action">Kompres</string>
+    <string name="compress_title">Kompres PDF</string>
+    <string name="compress_message">Halaman di-encode ulang agar file lebih kecil. Pilih target — hingga 100 KB jika memungkinkan.</string>
+    <string name="compress_current_size">Ukuran saat ini: %1$s</string>
+    <string name="compress_target_label">Ukuran target</string>
+    <string name="compress_target_value">Target: %1$s</string>
+    <string name="compress_min_label">100 KB</string>
+    <string name="compress_run">Kompres ke %1$s</string>
+    <string name="compress_success">Dikompres menjadi %1$s</string>
+    <string name="compress_success_near">Ukuran terkecil: %1$s (tidak mencapai %2$s)</string>
+    <string name="compress_failed">Kompres gagal: %1$s</string>
+    <string name="compress_already_small">PDF ini sudah sama atau lebih kecil dari target yang dipilih.</string>
 
     <!-- QR Scanner -->
     <string name="qr_scanner_title">Pemindai QR</string>

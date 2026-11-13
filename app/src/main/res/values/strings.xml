@@ -25,6 +25,7 @@
     <string name="action_select_all">Select all</string>
     <string name="action_undo">Undo</string>
     <string name="action_redo">Redo</string>
+    <string name="action_retry">Retry</string>
     <string name="cd_selected">Selected</string>
     <string name="home_label">Home</string>
     <string name="nav_home">Home</string>
@@ -48,6 +49,17 @@
     <string name="greeting_afternoon">Good afternoon</string>
     <string name="greeting_evening">Good evening</string>
     <string name="greeting_subtitle">Your documents, ready to go</string>
+    <string name="feature_tools">Featured tools</string>
+    <string name="feature_scan">Scan</string>
+    <string name="feature_scan_desc">Capture pages</string>
+    <string name="feature_read_pdf">Read PDF</string>
+    <string name="feature_read_pdf_desc">Open &amp; view</string>
+    <string name="feature_merge_split">Merge / Split</string>
+    <string name="feature_merge_split_desc">Combine or extract</string>
+    <string name="feature_compress">Compress</string>
+    <string name="feature_compress_desc">Shrink PDF size</string>
+    <string name="feature_pick_pdf">Choose a PDF</string>
+    <string name="feature_merge_need_two">Select at least 2 PDFs to merge</string>
     <string name="import_file">Import file</string>
     <string name="import_pdf">Import PDF</string>
     <string name="filter_all">All</string>
@@ -122,6 +134,7 @@
     <string name="camera_permission_title">Camera permission required</string>
     <string name="camera_permission_message">Archivo needs camera access to scan documents. You can still import photos from the gallery.</string>
     <string name="allow_camera">Allow camera</string>
+    <string name="open_settings">Open settings</string>
     <string name="continue_review">Continue to review</string>
     <string name="error_capture">Failed to take photo</string>
     <string name="error_import">Failed to import image</string>
@@ -250,6 +263,8 @@
     <string name="onboarding_start">Get started</string>
     <string name="onboarding_auto_title">Auto-capture when steady</string>
     <string name="onboarding_auto_body">Point at a page — Archivo detects edges and captures once the document is stable. Switch to Manual anytime.</string>
+    <string name="onboarding_camera_title">Camera access</string>
+    <string name="onboarding_camera_body">Archivo needs the camera to scan pages and QR codes. You can still import from the gallery if you skip it — grant access when prompted on first scan.</string>
     <string name="onboarding_library_title">Scan results and PDFs, one home</string>
     <string name="onboarding_library_body">Camera captures go to Scan results. Imported PDFs live under PDF. Use All to see everything. The Scan tab starts a new capture.</string>
     <string name="onboarding_offline_title">Private by design</string>
@@ -276,6 +291,20 @@
     <string name="split_mode_one">One document</string>
     <string name="split_mode_each">Each page</string>
     <string name="split_remove_from_source">Remove pages from original</string>
+
+    <!-- Compress PDF -->
+    <string name="compress_action">Compress</string>
+    <string name="compress_title">Compress PDF</string>
+    <string name="compress_message">Re-encode pages to shrink the file. Choose a target size — down to 100 KB when possible.</string>
+    <string name="compress_current_size">Current size: %1$s</string>
+    <string name="compress_target_label">Target size</string>
+    <string name="compress_target_value">Target: %1$s</string>
+    <string name="compress_min_label">100 KB</string>
+    <string name="compress_run">Compress to %1$s</string>
+    <string name="compress_success">Compressed to %1$s</string>
+    <string name="compress_success_near">Smallest size: %1$s (could not reach %2$s)</string>
+    <string name="compress_failed">Compression failed: %1$s</string>
+    <string name="compress_already_small">This PDF is already at or under the selected target.</string>
 
     <!-- QR Scanner -->
     <string name="qr_scanner_title">QR Scanner</string>

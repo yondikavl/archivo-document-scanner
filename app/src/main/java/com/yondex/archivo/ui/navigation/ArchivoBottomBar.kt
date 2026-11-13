@@ -16,6 +16,7 @@ import com.yondex.archivo.ui.components.SketchBottomNavItem
 enum class MainTab {
     Home,
     Scan,
+    Qr,
     Settings,
 }
 
@@ -34,6 +35,7 @@ fun ArchivoBottomBar(
     val tabs = listOf(
         TabSpec(MainTab.Home, R.drawable.ic_home, R.string.nav_home),
         TabSpec(MainTab.Scan, R.drawable.ic_camera, R.string.nav_scan),
+        TabSpec(MainTab.Qr, R.drawable.ic_qrcode, R.string.nav_qr),
         TabSpec(MainTab.Settings, R.drawable.ic_settings, R.string.nav_settings),
     )
     Column(

@@ -1,6 +1,5 @@
 package com.yondex.archivo.ui.settings
 
-import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -71,6 +70,7 @@ import com.yondex.archivo.domain.model.PdfPageSize
 import com.yondex.archivo.domain.model.ThemeMode
 import com.yondex.archivo.ui.components.SketchShape
 import com.yondex.archivo.ui.components.SketchShapeLarge
+import com.yondex.archivo.ui.components.SketchSheetDragHandle
 import com.yondex.archivo.ui.label
 import com.yondex.archivo.ui.legal.LegalDocument
 import com.yondex.archivo.ui.legal.LegalDocumentSheet
@@ -89,7 +89,6 @@ class SettingsViewModel @Inject constructor(private val repository: SettingsRepo
 
     fun setThemeMode(value: ThemeMode) = viewModelScope.launch { repository.setThemeMode(value) }
     fun setAppLanguage(value: AppLanguage) = viewModelScope.launch { repository.setAppLanguage(value) }
-    fun setDynamicColor(value: Boolean) = viewModelScope.launch { repository.setDynamicColor(value) }
     fun setDefaultFilter(value: PageFilter) = viewModelScope.launch { repository.setDefaultFilter(value) }
     fun setPdfPageSize(value: PdfPageSize) = viewModelScope.launch { repository.setPdfPageSize(value) }
     fun setExportQuality(value: ExportQuality) = viewModelScope.launch { repository.setExportQuality(value) }
@@ -103,7 +102,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
     var legalDoc by remember { mutableStateOf<LegalDocument?>(null) }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets.safeDrawing.only(
             WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
         ),
@@ -116,7 +115,7 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
+                    containerColor = Color.Transparent,
                 ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -158,16 +157,6 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                     label = { it.label() },
                     onSelect = viewModel::setThemeMode,
                 )
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    SettingsDivider()
-                    SwitchSetting(
-                        title = stringResource(R.string.dynamic_color),
-                        summary = stringResource(R.string.dynamic_color_summary),
-                        iconRes = R.drawable.ic_dynamic_color,
-                        checked = settings.dynamicColor,
-                        onCheckedChange = viewModel::setDynamicColor,
-                    )
-                }
             }
 
             SettingsGroup(
@@ -507,7 +496,7 @@ private fun <T> OptionSetting(
             shape = SketchShapeLarge,
             containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 0.dp,
-            dragHandle = null,
+            dragHandle = { SketchSheetDragHandle() },
         ) {
             Column(
                 Modifier

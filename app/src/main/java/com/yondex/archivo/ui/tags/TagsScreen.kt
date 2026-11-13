@@ -88,7 +88,7 @@ fun TagsScreen(onBack: () -> Unit, viewModel: TagsViewModel = hiltViewModel()) {
     var dialog by remember { mutableStateOf<TagDialog?>(null) }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets.safeDrawing.only(
             WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
         ),
@@ -96,7 +96,7 @@ fun TagsScreen(onBack: () -> Unit, viewModel: TagsViewModel = hiltViewModel()) {
             TopAppBar(
                 title = { Text(stringResource(R.string.manage_tags)) },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
+                    containerColor = Color.Transparent,
                 ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {

@@ -12,6 +12,8 @@ import com.yondex.archivo.data.local.db.LibraryFileEntity
 import com.yondex.archivo.domain.model.LibraryFile
 import com.yondex.archivo.domain.model.LibraryFileType
 import com.yondex.archivo.pdf.JpegPdfWriter
+import com.yondex.archivo.pdf.PdfCompressResult
+import com.yondex.archivo.pdf.PdfCompressor
 import com.yondex.archivo.pdf.PdfImagePage
 import com.yondex.archivo.pdf.PdfRasterizer
 import com.yondex.archivo.scanner.BitmapIO
@@ -146,6 +148,36 @@ class LibraryRepository @Inject constructor(
             created += id
         }
         created
+    }
+
+    /**
+     * Re-encodes a library PDF to meet [maxBytes] when possible (default 100 KB).
+     * Overwrites the existing file in place and refreshes cover metadata.
+     */
+    suspend fun compressPdf(
+        id: Long,
+        maxBytes: Long = PdfCompressor.TARGET_100KB,
+    ): Pair<LibraryFile, PdfCompressResult> = withContext(Dispatchers.IO) {
+        val entity = dao.get(id) ?: error("PDF missing")
+        val source = File(entity.path)
+        require(source.exists()) { "PDF file missing" }
+        val temp = File(source.parentFile, "compress_${id}_${System.nanoTime()}.pdf")
+        try {
+            val result = PdfCompressor.compress(
+                source = source,
+                title = entity.title,
+                output = temp,
+                targetBytes = maxBytes,
+            )
+            storage.move(temp, source)
+            val now = System.currentTimeMillis()
+            dao.updateSize(id, source.length(), now)
+            generateCover(id, source)
+            val updated = dao.get(id)?.toDomain() ?: error("PDF missing after compress")
+            updated to result.copy(bytes = source.length())
+        } finally {
+            if (temp.exists()) temp.delete()
+        }
     }
 
     suspend fun rename(id: Long, title: String) {

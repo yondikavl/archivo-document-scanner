@@ -77,10 +77,13 @@ class MainActivity : AppCompatActivity() {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
             }
-            ArchivoTheme(darkTheme = dark, dynamicColor = current.dynamicColor) {
+            ArchivoTheme(darkTheme = dark, dynamicColor = false) {
                 LocalizedContent(current.appLanguage) {
                     if (!current.onboardingDone) {
-                        Surface(modifier = Modifier.fillMaxSize()) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = androidx.compose.ui.graphics.Color.Transparent,
+                        ) {
                             OnboardingScreen(
                                 language = current.appLanguage,
                                 themeMode = current.themeMode,

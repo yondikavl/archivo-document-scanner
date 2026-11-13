@@ -1,5 +1,6 @@
 package com.yondex.archivo.ui.split
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -41,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
@@ -93,6 +95,7 @@ data class SplitUiState(
     val mode: SplitMode = SplitMode.EXTRACT_ONE,
     val removeFromSource: Boolean = false,
     val isPdf: Boolean = false,
+    val pdfPath: String? = null,
     val loading: Boolean = true,
     val busy: Boolean = false,
     val error: String? = null,
@@ -148,15 +151,10 @@ class SplitViewModel @Inject constructor(
                 val pdf = File(file.path)
                 val count = PdfRasterizer.pageCount(pdf)
                 val pages = (0 until count).map { index ->
-                    val bitmap = PdfRasterizer.renderPage(pdf, index, maxDimension = 400)
-                    val stream = java.io.ByteArrayOutputStream()
-                    bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 70, stream)
-                    bitmap.recycle()
                     SplitPageItem(
                         key = "pdf_$index",
                         label = "${index + 1}",
                         pdfIndex = index,
-                        thumbBytes = stream.toByteArray(),
                     )
                 }
                 _state.value = SplitUiState(
@@ -164,6 +162,7 @@ class SplitViewModel @Inject constructor(
                     pages = pages,
                     selected = pages.map { it.key }.toSet(),
                     isPdf = true,
+                    pdfPath = file.path,
                     loading = false,
                 )
             }
@@ -254,7 +253,7 @@ fun SplitScreen(
     LaunchedEffect(Unit) { viewModel.askTitle.collect { titleDialog = it } }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.split_title)) },
@@ -274,7 +273,7 @@ fun SplitScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
             )
         },
     ) { padding ->
@@ -349,7 +348,11 @@ fun SplitScreen(
                                 .clickable { viewModel.toggle(page.key) }
                                 .padding(6.dp),
                         ) {
-                            PageThumb(page, Modifier.fillMaxWidth().aspectRatio(0.72f))
+                            PageThumb(
+                                page = page,
+                                pdfPath = state.pdfPath,
+                                modifier = Modifier.fillMaxWidth().aspectRatio(0.72f),
+                            )
                             Spacer(Modifier.height(4.dp))
                             Text(
                                 stringResource(R.string.page_cd, page.label.toIntOrNull() ?: 1),
@@ -403,24 +406,40 @@ fun SplitScreen(
 }
 
 @Composable
-private fun PageThumb(page: SplitPageItem, modifier: Modifier = Modifier) {
-    val bitmap = remember(page.key, page.thumbPath, page.thumbBytes) {
-        when {
-            page.thumbBytes != null -> BitmapFactory.decodeByteArray(page.thumbBytes, 0, page.thumbBytes.size)
+private fun PageThumb(
+    page: SplitPageItem,
+    pdfPath: String?,
+    modifier: Modifier = Modifier,
+) {
+    var bitmap by remember(page.key) { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(page.key, page.thumbPath, page.thumbBytes, page.pdfIndex, pdfPath) {
+        val decoded = when {
+            page.thumbBytes != null ->
+                BitmapFactory.decodeByteArray(page.thumbBytes, 0, page.thumbBytes.size)
             page.thumbPath != null -> BitmapFactory.decodeFile(page.thumbPath)
+            page.pdfIndex != null && pdfPath != null ->
+                runCatching {
+                    PdfRasterizer.renderPage(File(pdfPath), page.pdfIndex, maxDimension = 400)
+                }.getOrNull()
             else -> null
         }
+        val previous = bitmap
+        bitmap = decoded
+        if (previous != null && previous !== decoded && !previous.isRecycled) {
+            previous.recycle()
+        }
     }
-    if (bitmap != null) {
+    val current = bitmap
+    if (current != null && !current.isRecycled) {
         Image(
-            bitmap = bitmap.asImageBitmap(),
+            bitmap = current.asImageBitmap(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = modifier,
         )
     } else {
         Box(modifier, contentAlignment = Alignment.Center) {
-            Text(page.label)
+            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
         }
     }
 }

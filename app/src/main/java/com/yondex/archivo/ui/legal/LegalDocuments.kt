@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.yondex.archivo.R
 import com.yondex.archivo.ui.components.SketchShapeLarge
+import com.yondex.archivo.ui.components.SketchSheetDragHandle
 
 enum class LegalDocument {
     Privacy,
@@ -54,7 +55,7 @@ fun LegalDocumentSheet(
         shape = SketchShapeLarge,
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp,
-        dragHandle = null,
+        dragHandle = { SketchSheetDragHandle() },
     ) {
         Column(
             Modifier

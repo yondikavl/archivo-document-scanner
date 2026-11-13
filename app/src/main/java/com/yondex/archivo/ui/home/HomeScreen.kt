@@ -4,14 +4,11 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,11 +20,13 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -37,7 +36,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
-import androidx.compose.material.icons.sharp.CallMerge
 import androidx.compose.material.icons.sharp.Close
 import androidx.compose.material.icons.sharp.MoreVert
 import androidx.compose.material.icons.sharp.SelectAll
@@ -46,12 +44,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -63,7 +63,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -97,12 +96,14 @@ import com.yondex.archivo.ui.components.SketchChipGap
 import com.yondex.archivo.ui.components.SketchItemGap
 import com.yondex.archivo.ui.components.SketchShape
 import com.yondex.archivo.ui.components.SketchShapeLarge
+import com.yondex.archivo.ui.components.SketchSheetDragHandle
 import com.yondex.archivo.ui.components.TagDot
 import com.yondex.archivo.ui.components.TagPickerDialog
 import com.yondex.archivo.ui.components.TextInputDialog
 import com.yondex.archivo.ui.components.Thumbnail
 import com.yondex.archivo.ui.components.formatDate
 import com.yondex.archivo.ui.label
+import com.yondex.archivo.ui.pdf.CompressPdfSheet
 import java.util.Calendar
 
 private sealed interface HomeDialog {
@@ -114,6 +115,9 @@ private sealed interface HomeDialog {
     data object DeleteDocuments : HomeDialog
     data class RenameLibraryFile(val file: LibraryFile) : HomeDialog
     data class DeleteLibraryFile(val file: LibraryFile) : HomeDialog
+    data class CompressLibraryFile(val file: LibraryFile) : HomeDialog
+    data object MergeSplitTools : HomeDialog
+    data class PickLibraryPdf(val purpose: PdfFeaturePurpose) : HomeDialog
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -126,78 +130,100 @@ fun HomeScreen(
     onSearch: () -> Unit,
     onManageTags: () -> Unit,
     onScan: () -> Unit,
-    onQr: () -> Unit,
     onMerge: (documentIds: String, libraryFileIds: String) -> Unit,
+    onSplit: (libraryFileId: Long) -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val compressing by viewModel.compressing.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var dialog by remember { mutableStateOf<HomeDialog?>(null) }
     var folderMenu by remember { mutableStateOf<Folder?>(null) }
     var libraryMenu by remember { mutableStateOf<LibraryFile?>(null) }
+    var pendingFeatureImport by remember { mutableStateOf<PdfFeaturePurpose?>(null) }
 
     val importLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenMultipleDocuments(),
     ) { uris -> viewModel.importFiles(uris) }
+
+    val featureImportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments(),
+    ) { uris ->
+        val purpose = pendingFeatureImport
+        pendingFeatureImport = null
+        if (purpose != null) viewModel.importForFeature(uris, purpose)
+    }
+
+    fun launchFeatureImport(purpose: PdfFeaturePurpose) {
+        pendingFeatureImport = purpose
+        featureImportLauncher.launch(arrayOf("application/pdf"))
+    }
+
+    fun openFeaturePdfPicker(purpose: PdfFeaturePurpose) {
+        if (state.libraryFiles.isEmpty()) {
+            launchFeatureImport(purpose)
+        } else {
+            dialog = HomeDialog.PickLibraryPdf(purpose)
+        }
+    }
 
     BackHandler(enabled = state.isSelecting) { viewModel.clearSelection() }
 
     LaunchedEffect(Unit) {
         viewModel.messages.collect { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
     }
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is HomeEvent.OpenPdf -> onOpenPdf(event.id)
+                is HomeEvent.SplitPdf -> onSplit(event.id)
+                is HomeEvent.MergePdfs -> onMerge("", event.libraryFileIds)
+                is HomeEvent.CompressPdf -> dialog = HomeDialog.CompressLibraryFile(event.file)
+            }
+        }
+    }
+    var wasCompressing by remember { mutableStateOf(false) }
+    LaunchedEffect(compressing) {
+        if (wasCompressing && !compressing && dialog is HomeDialog.CompressLibraryFile) {
+            dialog = null
+        }
+        wasCompressing = compressing
+    }
 
     Scaffold(
         topBar = {
-            AnimatedContent(
-                targetState = state.isSelecting,
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                label = "home_top_bar",
-            ) { selecting ->
-                if (selecting) {
-                    SelectionTopBar(
-                        count = state.selectionCount,
-                        canMerge = state.canMerge,
-                        hasDocuments = state.selection.isNotEmpty(),
-                        canDelete = state.canDeleteSelection,
-                        onClose = viewModel::clearSelection,
-                        onSelectAll = viewModel::selectAll,
-                        onMerge = {
-                            onMerge(viewModel.mergeDocumentIds(), viewModel.mergeLibraryIds())
-                            viewModel.clearSelection()
-                        },
-                        onTag = { dialog = HomeDialog.TagDocuments },
-                        onMove = { dialog = HomeDialog.MoveDocuments },
-                        onDelete = { dialog = HomeDialog.DeleteDocuments },
-                    )
-                } else if (onBack != null) {
-                    FolderTopBar(
-                        title = state.currentFolder?.name.orEmpty(),
-                        viewMode = state.viewMode,
-                        sortOrder = state.sortOrder,
-                        onBack = onBack,
-                        onSearch = onSearch,
-                        onToggleView = {
-                            viewModel.setViewMode(if (state.viewMode == ViewMode.GRID) ViewMode.LIST else ViewMode.GRID)
-                        },
-                        onSort = viewModel::setSortOrder,
-                        onCreateFolder = { dialog = HomeDialog.CreateFolder },
-                        onManageTags = onManageTags,
-                    )
-                } else {
-                    RootHomeTopBar(
-                        viewMode = state.viewMode,
-                        sortOrder = state.sortOrder,
-                        onToggleView = {
-                            viewModel.setViewMode(if (state.viewMode == ViewMode.GRID) ViewMode.LIST else ViewMode.GRID)
-                        },
-                        onSort = viewModel::setSortOrder,
-                        onCreateFolder = { dialog = HomeDialog.CreateFolder },
-                        onManageTags = onManageTags,
-                    )
-                }
+            when {
+                state.isSelecting -> SelectionTopBar(
+                    count = state.selectionCount,
+                    canMerge = state.canMerge,
+                    hasDocuments = state.selection.isNotEmpty(),
+                    canDelete = state.canDeleteSelection,
+                    onClose = viewModel::clearSelection,
+                    onSelectAll = viewModel::selectAll,
+                    onMerge = {
+                        onMerge(viewModel.mergeDocumentIds(), viewModel.mergeLibraryIds())
+                        viewModel.clearSelection()
+                    },
+                    onTag = { dialog = HomeDialog.TagDocuments },
+                    onMove = { dialog = HomeDialog.MoveDocuments },
+                    onDelete = { dialog = HomeDialog.DeleteDocuments },
+                )
+                onBack != null -> FolderTopBar(
+                    title = state.currentFolder?.name.orEmpty(),
+                    viewMode = state.viewMode,
+                    sortOrder = state.sortOrder,
+                    onBack = onBack,
+                    onSearch = onSearch,
+                    onToggleView = {
+                        viewModel.setViewMode(if (state.viewMode == ViewMode.GRID) ViewMode.LIST else ViewMode.GRID)
+                    },
+                    onSort = viewModel::setSortOrder,
+                    onCreateFolder = { dialog = HomeDialog.CreateFolder },
+                    onManageTags = onManageTags,
+                )
             }
         },
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets.safeDrawing.only(
             WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
         ),
@@ -217,58 +243,53 @@ fun HomeScreen(
             ) {
                 if (onBack == null && !state.isSelecting) {
                     fullWidthItem("greeting") {
-                        GreetingHeader(
-                            onImport = {
-                                importLauncher.launch(arrayOf("application/pdf"))
-                            },
-                            onQr = onQr,
+                        GreetingHeader()
+                    }
+                    fullWidthItem("features") {
+                        FeatureHighlights(
+                            onScan = onScan,
+                            onReadPdf = { openFeaturePdfPicker(PdfFeaturePurpose.READ) },
+                            onMergeSplit = { dialog = HomeDialog.MergeSplitTools },
+                            onCompress = { openFeaturePdfPicker(PdfFeaturePurpose.COMPRESS) },
                         )
                     }
                     fullWidthItem("search") {
-                        SearchEntry(onClick = onSearch, modifier = Modifier.padding(top = 2.dp))
+                        SearchSortRow(
+                            sortOrder = state.sortOrder,
+                            onSearch = onSearch,
+                            onSort = viewModel::setSortOrder,
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
                     }
                     fullWidthItem("categories") {
                         CategoryRow(
                             selectedFilter = state.filter,
+                            viewMode = state.viewMode,
                             onSelect = viewModel::setFilter,
+                            onToggleView = {
+                                viewModel.setViewMode(
+                                    if (state.viewMode == ViewMode.GRID) ViewMode.LIST else ViewMode.GRID,
+                                )
+                            },
+                            onCreateFolder = { dialog = HomeDialog.CreateFolder },
+                            onManageTags = onManageTags,
                             modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
                         )
-                    }
-                    state.recentLibrary?.let { recent ->
-                        if (state.filter == HomeFilter.ALL) {
-                            fullWidthItem("recent") {
-                                RecentlyAddedCard(
-                                    file = recent,
-                                    onClick = { onOpenPdf(recent.id) },
-                                )
-                            }
-                        }
                     }
                 }
 
                 if (state.tags.isNotEmpty() && (state.filter == HomeFilter.ALL || state.filter == HomeFilter.SCANS)) {
                     fullWidthItem("tags") {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            LazyRow(
-                                horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                items(state.tags, key = { it.id }) { tag ->
-                                    SketchChip(
-                                        selected = tag.id in state.tagFilter,
-                                        onClick = { viewModel.toggleTagFilter(tag.id) },
-                                        label = { Text(tag.name) },
-                                        leadingIcon = { TagDot(Color(tag.color)) },
-                                    )
-                                }
-                            }
-                            IconButton(onClick = onManageTags) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_tag),
-                                    contentDescription = stringResource(R.string.manage_tags),
+                            items(state.tags, key = { it.id }) { tag ->
+                                SketchChip(
+                                    selected = tag.id in state.tagFilter,
+                                    onClick = { viewModel.toggleTagFilter(tag.id) },
+                                    label = { Text(tag.name) },
+                                    leadingIcon = { TagDot(Color(tag.color)) },
                                 )
                             }
                         }
@@ -303,6 +324,47 @@ fun HomeScreen(
                                     onClick = { dialog = HomeDialog.DeleteFolder(entry.folder); folderMenu = null },
                                 )
                             }
+                        }
+                    }
+                }
+
+                if (previewDocuments.isNotEmpty()) {
+                    if (state.folders.isNotEmpty() || state.tagFilter.isNotEmpty() || showMoreDocuments || previewFiles.isNotEmpty()) {
+                        fullWidthItem("docs_header") {
+                            SectionHeader(
+                                text = when {
+                                    state.tagFilter.isNotEmpty() -> stringResource(R.string.section_documents_tagged)
+                                    state.filter == HomeFilter.SCANS -> stringResource(R.string.filter_scans)
+                                    else -> stringResource(R.string.section_documents)
+                                },
+                                onViewMore = if (showMoreDocuments) {
+                                    { viewModel.setFilter(HomeFilter.SCANS) }
+                                } else {
+                                    null
+                                },
+                            )
+                        }
+                    } else if (onBack == null) {
+                        fullWidthItem("docs_header") {
+                            SectionHeader(
+                                text = stringResource(R.string.section_all_documents),
+                                onViewMore = if (showMoreDocuments) {
+                                    { viewModel.setFilter(HomeFilter.SCANS) }
+                                } else {
+                                    null
+                                },
+                            )
+                        }
+                    }
+                    items(previewDocuments, key = { "doc_${it.id}" }) { document ->
+                        val selected = document.id in state.selection
+                        val onClick = {
+                            if (state.isSelecting) viewModel.toggleSelection(document.id) else onOpenDocument(document.id)
+                        }
+                        if (isGrid) {
+                            DocumentGridCard(document, selected, onClick, { viewModel.toggleSelection(document.id) })
+                        } else {
+                            DocumentListItem(document, selected, onClick, { viewModel.toggleSelection(document.id) })
                         }
                     }
                 }
@@ -355,6 +417,19 @@ fun HomeScreen(
                                 onDismissRequest = { libraryMenu = null },
                             ) {
                                 DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.compress_action)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_compress),
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    onClick = {
+                                        dialog = HomeDialog.CompressLibraryFile(file)
+                                        libraryMenu = null
+                                    },
+                                )
+                                DropdownMenuItem(
                                     text = { Text(stringResource(R.string.action_rename)) },
                                     leadingIcon = {
                                         Icon(
@@ -385,46 +460,9 @@ fun HomeScreen(
                     }
                 }
 
-                if (previewDocuments.isNotEmpty()) {
-                    if (state.folders.isNotEmpty() || previewFiles.isNotEmpty() || state.tagFilter.isNotEmpty() || showMoreDocuments) {
-                        fullWidthItem("docs_header") {
-                            SectionHeader(
-                                text = when {
-                                    state.tagFilter.isNotEmpty() -> stringResource(R.string.section_documents_tagged)
-                                    state.filter == HomeFilter.SCANS -> stringResource(R.string.filter_scans)
-                                    else -> stringResource(R.string.section_documents)
-                                },
-                                onViewMore = if (showMoreDocuments) {
-                                    { viewModel.setFilter(HomeFilter.SCANS) }
-                                } else {
-                                    null
-                                },
-                            )
-                        }
-                    } else if (onBack == null) {
-                        fullWidthItem("docs_header") {
-                            SectionHeader(
-                                text = stringResource(R.string.section_all_documents),
-                                onViewMore = if (showMoreDocuments) {
-                                    { viewModel.setFilter(HomeFilter.SCANS) }
-                                } else {
-                                    null
-                                },
-                            )
-                        }
-                    }
-                    items(previewDocuments, key = { "doc_${it.id}" }) { document ->
-                        val selected = document.id in state.selection
-                        val onClick = {
-                            if (state.isSelecting) viewModel.toggleSelection(document.id) else onOpenDocument(document.id)
-                        }
-                        if (isGrid) {
-                            DocumentGridCard(document, selected, onClick, { viewModel.toggleSelection(document.id) })
-                        } else {
-                            DocumentListItem(document, selected, onClick, { viewModel.toggleSelection(document.id) })
-                        }
-                    }
-                } else if (!state.isLoading && state.folders.isEmpty() && previewFiles.isEmpty()) {
+                if (previewDocuments.isEmpty() && previewFiles.isEmpty() &&
+                    !state.isLoading && state.folders.isEmpty()
+                ) {
                     fullWidthItem("empty") {
                         val (titleRes, messageRes, iconRes) = when {
                             state.tagFilter.isNotEmpty() -> Triple(
@@ -533,21 +571,70 @@ fun HomeScreen(
             onDismiss = { dialog = null },
             onConfirm = { viewModel.deleteLibraryFile(current.file.id); dialog = null },
         )
+        is HomeDialog.CompressLibraryFile -> {
+            val latest = state.libraryFiles.firstOrNull { it.id == current.file.id } ?: current.file
+            CompressPdfSheet(
+                currentBytes = latest.sizeBytes,
+                compressing = compressing,
+                onDismiss = { if (!compressing) dialog = null },
+                onCompress = { targetBytes ->
+                    viewModel.compressLibraryFile(latest.id, targetBytes)
+                },
+            )
+        }
+        HomeDialog.MergeSplitTools -> MergeSplitToolsSheet(
+            onDismiss = { dialog = null },
+            onMerge = {
+                dialog = null
+                openFeaturePdfPicker(PdfFeaturePurpose.MERGE)
+            },
+            onSplit = {
+                dialog = null
+                openFeaturePdfPicker(PdfFeaturePurpose.SPLIT)
+            },
+        )
+        is HomeDialog.PickLibraryPdf -> FeaturePdfPickerSheet(
+            files = state.libraryFiles,
+            purpose = current.purpose,
+            onDismiss = { dialog = null },
+            onImport = {
+                dialog = null
+                launchFeatureImport(current.purpose)
+            },
+            onPick = { file ->
+                dialog = null
+                when (current.purpose) {
+                    PdfFeaturePurpose.READ -> onOpenPdf(file.id)
+                    PdfFeaturePurpose.SPLIT -> onSplit(file.id)
+                    PdfFeaturePurpose.COMPRESS -> dialog = HomeDialog.CompressLibraryFile(file)
+                    PdfFeaturePurpose.MERGE -> Unit
+                }
+            },
+            onPickMultiple = { files ->
+                dialog = null
+                if (files.size < 2) {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.feature_merge_need_two),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                } else {
+                    onMerge("", files.joinToString(",") { it.id.toString() })
+                }
+            },
+        )
         null -> Unit
     }
 }
 
-private const val ALL_PREVIEW_LIMIT = 6
+private const val ALL_PREVIEW_LIMIT = 4
 
 private fun LazyGridScope.fullWidthItem(key: String, content: @Composable () -> Unit) {
     item(key = key, span = { GridItemSpan(maxLineSpan) }) { content() }
 }
 
 @Composable
-private fun GreetingHeader(
-    onImport: () -> Unit,
-    onQr: () -> Unit,
-) {
+private fun GreetingHeader() {
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     val greeting = stringResource(
         when {
@@ -556,72 +643,397 @@ private fun GreetingHeader(
             else -> R.string.greeting_evening
         },
     )
-    val qrLabel = stringResource(R.string.nav_qr)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 10.dp),
+    Column(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 10.dp)) {
+        Text(
+            greeting,
+            style = MaterialTheme.typography.displaySmall,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            stringResource(R.string.greeting_subtitle),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun FeatureHighlights(
+    onScan: () -> Unit,
+    onReadPdf: () -> Unit,
+    onMergeSplit: () -> Unit,
+    onCompress: () -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(SketchItemGap),
+        modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 6.dp),
     ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                greeting,
-                style = MaterialTheme.typography.displaySmall,
+        Text(
+            stringResource(R.string.feature_tools),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(SketchItemGap), modifier = Modifier.fillMaxWidth()) {
+            FeatureToolCard(
+                title = stringResource(R.string.feature_scan),
+                subtitle = stringResource(R.string.feature_scan_desc),
+                iconRes = R.drawable.ic_scanner,
+                container = MaterialTheme.colorScheme.primaryContainer,
+                content = MaterialTheme.colorScheme.onPrimaryContainer,
+                onClick = onScan,
+                modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                stringResource(R.string.greeting_subtitle),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            FeatureToolCard(
+                title = stringResource(R.string.feature_read_pdf),
+                subtitle = stringResource(R.string.feature_read_pdf_desc),
+                iconRes = R.drawable.ic_document,
+                container = MaterialTheme.colorScheme.secondaryContainer,
+                content = MaterialTheme.colorScheme.onSecondaryContainer,
+                onClick = onReadPdf,
+                modifier = Modifier.weight(1f),
             )
         }
-        Spacer(Modifier.width(SketchChipGap))
-        Surface(
-            onClick = onQr,
-            shape = SketchShape,
-            color = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            shadowElevation = 0.dp,
-            tonalElevation = 0.dp,
-            modifier = Modifier.semantics {
-                contentDescription = qrLabel
+        Row(horizontalArrangement = Arrangement.spacedBy(SketchItemGap), modifier = Modifier.fillMaxWidth()) {
+            FeatureToolCard(
+                title = stringResource(R.string.feature_merge_split),
+                subtitle = stringResource(R.string.feature_merge_split_desc),
+                iconRes = R.drawable.ic_split,
+                container = MaterialTheme.colorScheme.tertiaryContainer,
+                content = MaterialTheme.colorScheme.onTertiaryContainer,
+                onClick = onMergeSplit,
+                modifier = Modifier.weight(1f),
+            )
+            FeatureToolCard(
+                title = stringResource(R.string.feature_compress),
+                subtitle = stringResource(R.string.feature_compress_desc),
+                iconRes = R.drawable.ic_compress,
+                container = MaterialTheme.colorScheme.surfaceVariant,
+                content = MaterialTheme.colorScheme.onSurfaceVariant,
+                onClick = onCompress,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun FeatureToolCard(
+    title: String,
+    subtitle: String,
+    @DrawableRes iconRes: Int,
+    container: Color,
+    content: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        shape = SketchShapeLarge,
+        color = container,
+        contentColor = content,
+        shadowElevation = 0.dp,
+        tonalElevation = 0.dp,
+        modifier = modifier
+            .height(118.dp)
+            .semantics {
+                contentDescription = "$title. $subtitle"
                 role = Role.Button
             },
+    ) {
+        Column(
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxSize().padding(16.dp),
         ) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.padding(12.dp),
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(SketchShape)
+                    .background(content.copy(alpha = 0.12f)),
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_qrcode),
+                    painter = painterResource(iconRes),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(22.dp),
                 )
             }
-        }
-        Spacer(Modifier.width(SketchChipGap))
-        Surface(
-            onClick = onImport,
-            shape = SketchShape,
-            color = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            shadowElevation = 0.dp,
-            tonalElevation = 0.dp,
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_upload),
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(Modifier.width(8.dp))
+            Column {
                 Text(
-                    stringResource(R.string.import_pdf),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
+                    title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = content.copy(alpha = 0.8f),
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MergeSplitToolsSheet(
+    onDismiss: () -> Unit,
+    onMerge: () -> Unit,
+    onSplit: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = SketchShapeLarge,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
+        dragHandle = { SketchSheetDragHandle() },
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 12.dp, vertical = 16.dp),
+        ) {
+            Text(
+                stringResource(R.string.feature_merge_split),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            )
+            FeatureActionRow(
+                title = stringResource(R.string.merge_action),
+                subtitle = stringResource(R.string.merge_message),
+                iconRes = R.drawable.ic_merge,
+                onClick = onMerge,
+            )
+            FeatureActionRow(
+                title = stringResource(R.string.split_action),
+                subtitle = stringResource(R.string.split_message),
+                iconRes = R.drawable.ic_split,
+                onClick = onSplit,
+            )
+            Spacer(Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+private fun FeatureActionRow(
+    title: String,
+    subtitle: String,
+    @DrawableRes iconRes: Int,
+    onClick: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SketchShape)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(40.dp)
+                .clip(SketchShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+        ) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(2.dp))
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FeaturePdfPickerSheet(
+    files: List<LibraryFile>,
+    purpose: PdfFeaturePurpose,
+    onDismiss: () -> Unit,
+    onImport: () -> Unit,
+    onPick: (LibraryFile) -> Unit,
+    onPickMultiple: (List<LibraryFile>) -> Unit,
+) {
+    val multi = purpose == PdfFeaturePurpose.MERGE
+    var selected by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = SketchShapeLarge,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
+        dragHandle = { SketchSheetDragHandle() },
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 12.dp, vertical = 16.dp),
+        ) {
+            Text(
+                stringResource(R.string.feature_pick_pdf),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(320.dp),
+            ) {
+                items(files, key = { it.id }) { file ->
+                    val isSelected = file.id in selected
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(SketchShape)
+                            .clickable {
+                                if (multi) {
+                                    selected = if (isSelected) selected - file.id else selected + file.id
+                                } else {
+                                    onPick(file)
+                                }
+                            }
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                    ) {
+                        Thumbnail(
+                            path = file.coverPath,
+                            modifier = Modifier.size(44.dp).clip(SketchShape),
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                file.title,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                formatFileSize(file.sizeBytes),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        if (multi && isSelected) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_check),
+                                contentDescription = stringResource(R.string.cd_selected),
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp),
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            FeatureActionRow(
+                title = stringResource(R.string.import_pdf),
+                subtitle = stringResource(R.string.feature_read_pdf_desc),
+                iconRes = R.drawable.ic_upload,
+                onClick = onImport,
+            )
+            if (multi) {
+                Spacer(Modifier.height(4.dp))
+                Surface(
+                    onClick = {
+                        onPickMultiple(files.filter { it.id in selected })
+                    },
+                    enabled = selected.size >= 2,
+                    shape = SketchShape,
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
+                    ) {
+                        Text(
+                            stringResource(R.string.merge_action),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+private fun SearchSortRow(
+    sortOrder: SortOrder,
+    onSearch: () -> Unit,
+    onSort: (SortOrder) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var sortMenu by remember { mutableStateOf(false) }
+    val sortLabel = stringResource(R.string.action_sort)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        SearchEntry(onClick = onSearch, modifier = Modifier.weight(1f))
+        Box {
+            Surface(
+                onClick = { sortMenu = true },
+                shape = SketchShape,
+                color = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                shadowElevation = 0.dp,
+                tonalElevation = 0.dp,
+                modifier = Modifier
+                    .size(56.dp)
+                    .semantics {
+                        contentDescription = sortLabel
+                        role = Role.Button
+                    },
+            ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_sort),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+            }
+            SketchDropdownMenu(expanded = sortMenu, onDismissRequest = { sortMenu = false }) {
+                SortOrder.entries.forEach { order ->
+                    DropdownMenuItem(
+                        text = { Text(order.label()) },
+                        leadingIcon = { RadioButton(selected = order == sortOrder, onClick = null) },
+                        onClick = { onSort(order); sortMenu = false },
+                    )
+                }
             }
         }
     }
@@ -633,12 +1045,10 @@ private fun SearchEntry(onClick: () -> Unit, modifier: Modifier = Modifier) {
     SketchCard(
         onClick = onClick,
         shape = SketchShape,
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics {
-                contentDescription = searchLabel
-                role = Role.Button
-            },
+        modifier = modifier.semantics {
+            contentDescription = searchLabel
+            role = Role.Button
+        },
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -655,122 +1065,83 @@ private fun SearchEntry(onClick: () -> Unit, modifier: Modifier = Modifier) {
                 searchLabel,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
 }
 
 @Composable
-private fun CategoryRow(selectedFilter: HomeFilter, onSelect: (HomeFilter) -> Unit, modifier: Modifier = Modifier) {
-    val items = listOf(
+private fun CategoryRow(
+    selectedFilter: HomeFilter,
+    viewMode: ViewMode,
+    onSelect: (HomeFilter) -> Unit,
+    onToggleView: () -> Unit,
+    onCreateFolder: () -> Unit,
+    onManageTags: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val filters = listOf(
         Triple(HomeFilter.ALL, R.string.filter_all, R.drawable.ic_home),
         Triple(HomeFilter.SCANS, R.string.filter_scans, R.drawable.ic_scanner),
         Triple(HomeFilter.PDF, R.string.filter_pdf, R.drawable.ic_document),
     )
     Row(
-        horizontalArrangement = Arrangement.spacedBy(SketchItemGap),
+        verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.fillMaxWidth(),
     ) {
-        items.forEach { (filter, labelRes, iconRes) ->
-            val active = filter == selectedFilter
-            val label = stringResource(labelRes)
-            Surface(
-                onClick = { onSelect(filter) },
-                shape = SketchShape,
-                color = if (active) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.surface
-                },
-                contentColor = if (active) {
-                    MaterialTheme.colorScheme.onPrimary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
-                shadowElevation = 0.dp,
-                tonalElevation = 0.dp,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(96.dp)
-                    .semantics(mergeDescendants = true) {
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
+            modifier = Modifier.weight(1f),
+        ) {
+            items(filters, key = { it.first.name }) { (filter, labelRes, iconRes) ->
+                val active = filter == selectedFilter
+                val label = stringResource(labelRes)
+                SketchChip(
+                    selected = active,
+                    onClick = { onSelect(filter) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(iconRes),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                    label = {
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
+                            maxLines = 1,
+                        )
+                    },
+                    modifier = Modifier.semantics(mergeDescendants = true) {
                         contentDescription = label
                         selected = active
                         role = Role.Tab
                     },
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(iconRes),
-                        contentDescription = null,
-                        modifier = Modifier.size(28.dp),
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
-                        maxLines = 1,
-                    )
-                }
+                )
             }
         }
-    }
-}
-
-@Composable
-private fun RecentlyAddedCard(file: LibraryFile, onClick: () -> Unit) {
-    SketchCard(
-        onClick = onClick,
-        shape = SketchShapeLarge,
-        paper = MaterialTheme.colorScheme.primary,
-        selected = false,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp),
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(SketchShape)
-                    .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.18f)),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_document),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(26.dp),
-                )
-            }
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    stringResource(R.string.recently_added),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    file.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
-                )
-            }
+        IconButton(onClick = onToggleView) {
             Icon(
-                painter = painterResource(R.drawable.ic_arrow_down),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier
-                    .size(22.dp)
-                    .graphicsLayer { rotationZ = -90f },
+                painter = painterResource(
+                    if (viewMode == ViewMode.GRID) R.drawable.ic_list else R.drawable.ic_grid,
+                ),
+                contentDescription = stringResource(R.string.change_view),
+            )
+        }
+        IconButton(onClick = onCreateFolder) {
+            Icon(
+                painter = painterResource(R.drawable.ic_folder_add),
+                contentDescription = stringResource(R.string.new_folder),
+            )
+        }
+        IconButton(onClick = onManageTags) {
+            Icon(
+                painter = painterResource(R.drawable.ic_tag),
+                contentDescription = stringResource(R.string.manage_tags),
             )
         }
     }
@@ -949,62 +1320,6 @@ private fun SectionHeader(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RootHomeTopBar(
-    viewMode: ViewMode,
-    sortOrder: SortOrder,
-    onToggleView: () -> Unit,
-    onSort: (SortOrder) -> Unit,
-    onCreateFolder: () -> Unit,
-    onManageTags: () -> Unit,
-) {
-    var sortMenu by remember { mutableStateOf(false) }
-    TopAppBar(
-        title = { },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-        actions = {
-            IconButton(onClick = onToggleView) {
-                Icon(
-                    painter = painterResource(
-                        if (viewMode == ViewMode.GRID) R.drawable.ic_list else R.drawable.ic_grid,
-                    ),
-                    contentDescription = stringResource(R.string.change_view),
-                )
-            }
-            Box {
-                IconButton(onClick = { sortMenu = true }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_sort),
-                        contentDescription = stringResource(R.string.action_sort),
-                    )
-                }
-                SketchDropdownMenu(expanded = sortMenu, onDismissRequest = { sortMenu = false }) {
-                    SortOrder.entries.forEach { order ->
-                        DropdownMenuItem(
-                            text = { Text(order.label()) },
-                            leadingIcon = { RadioButton(selected = order == sortOrder, onClick = null) },
-                            onClick = { onSort(order); sortMenu = false },
-                        )
-                    }
-                }
-            }
-            IconButton(onClick = onCreateFolder) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_folder_add),
-                    contentDescription = stringResource(R.string.new_folder),
-                )
-            }
-            IconButton(onClick = onManageTags) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_tag),
-                    contentDescription = stringResource(R.string.manage_tags),
-                )
-            }
-        },
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 private fun FolderTopBar(
     title: String,
     viewMode: ViewMode,
@@ -1121,7 +1436,10 @@ private fun SelectionTopBar(
                 Icon(Icons.Sharp.SelectAll, contentDescription = stringResource(R.string.action_select_all))
             }
             IconButton(onClick = onMerge, enabled = canMerge) {
-                Icon(Icons.Sharp.CallMerge, contentDescription = stringResource(R.string.merge_action))
+                Icon(
+                    painter = painterResource(R.drawable.ic_merge),
+                    contentDescription = stringResource(R.string.merge_action),
+                )
             }
             IconButton(onClick = onTag, enabled = hasDocuments) {
                 Icon(

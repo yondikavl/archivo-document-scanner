@@ -25,6 +25,9 @@ interface LibraryFileDao {
     @Query("UPDATE library_files SET title = :title WHERE id = :id")
     suspend fun rename(id: Long, title: String)
 
+    @Query("UPDATE library_files SET size_bytes = :sizeBytes, opened_at = :openedAt WHERE id = :id")
+    suspend fun updateSize(id: Long, sizeBytes: Long, openedAt: Long)
+
     @Query(
         """
         UPDATE library_files

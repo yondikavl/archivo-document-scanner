@@ -44,11 +44,13 @@ fun ArchivoNavHost() {
 
     val selectedTab = when {
         destination?.hasRoute<SettingsRoute>() == true -> MainTab.Settings
+        destination?.hasRoute<QrScannerRoute>() == true -> MainTab.Qr
         destination?.hasRoute<ScannerRoute>() == true -> MainTab.Scan
         else -> MainTab.Home
     }
     val showBottomBar = destination?.hasRoute<HomeRoute>() == true ||
-        destination?.hasRoute<SettingsRoute>() == true
+        destination?.hasRoute<SettingsRoute>() == true ||
+        destination?.hasRoute<QrScannerRoute>() == true
 
     fun currentHomeFolderId(): Long {
         val homeEntry = navController.currentBackStack.value
@@ -61,19 +63,26 @@ fun ArchivoNavHost() {
 
     fun openTab(tab: MainTab) {
         when (tab) {
-            MainTab.Home -> navController.navigate(HomeRoute()) {
-                popUpTo(navController.graph.findStartDestination().id) {
-                    saveState = true
+            MainTab.Home -> {
+                // Clear QR/Settings/etc. and land on root Home every time.
+                navController.navigate(HomeRoute()) {
+                    popUpTo(navController.graph.id) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
                 }
-                launchSingleTop = true
-                restoreState = true
             }
-            MainTab.Settings -> navController.navigate(SettingsRoute) {
-                popUpTo(navController.graph.findStartDestination().id) {
-                    saveState = true
+            MainTab.Settings -> {
+                if (selectedTab == MainTab.Settings) return
+                navController.navigate(SettingsRoute) {
+                    launchSingleTop = true
                 }
-                launchSingleTop = true
-                restoreState = true
+            }
+            MainTab.Qr -> {
+                if (selectedTab == MainTab.Qr) return
+                navController.navigate(QrScannerRoute) {
+                    launchSingleTop = true
+                }
             }
             MainTab.Scan -> navController.navigate(ScannerRoute(folderId = currentHomeFolderId()))
         }
@@ -86,7 +95,7 @@ fun ArchivoNavHost() {
             if (showBottomBar) {
                 ArchivoBottomBar(
                     selected = selectedTab,
-                    onSelect = ::openTab,
+                    onSelect = { tab -> openTab(tab) },
                 )
             }
         },
@@ -112,11 +121,13 @@ fun ArchivoNavHost() {
                     onScan = {
                         navController.navigate(ScannerRoute(folderId = currentHomeFolderId()))
                     },
-                    onQr = { navController.navigate(QrScannerRoute) },
                     onMerge = { documentIds, libraryFileIds ->
                         navController.navigate(
                             MergeRoute(documentIds = documentIds, libraryFileIds = libraryFileIds),
                         )
+                    },
+                    onSplit = { libraryFileId ->
+                        navController.navigate(SplitRoute(libraryFileId = libraryFileId))
                     },
                 )
             }
@@ -209,7 +220,7 @@ fun ArchivoNavHost() {
                 SettingsScreen(onBack = dropUnlessResumed { openTab(MainTab.Home) })
             }
             composable<QrScannerRoute> {
-                QrScannerScreen(onClose = dropUnlessResumed(block = back))
+                QrScannerScreen(onClose = dropUnlessResumed { openTab(MainTab.Home) })
             }
         }
     }

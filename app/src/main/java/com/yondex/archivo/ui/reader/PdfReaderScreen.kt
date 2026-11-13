@@ -1,8 +1,11 @@
 package com.yondex.archivo.ui.reader
 
 import android.graphics.Bitmap
+import android.graphics.Canvas as AndroidCanvas
+import android.graphics.Color as AndroidColor
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -15,6 +18,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,24 +27,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.sharp.ArrowBack
 import androidx.compose.material.icons.automirrored.sharp.Redo
 import androidx.compose.material.icons.automirrored.sharp.Undo
 import androidx.compose.material.icons.sharp.MoreVert
+import androidx.annotation.DrawableRes
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +56,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -56,8 +65,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -70,22 +81,31 @@ import androidx.navigation.toRoute
 import com.yondex.archivo.R
 import com.yondex.archivo.data.repository.LibraryRepository
 import com.yondex.archivo.data.repository.PdfAnnotationRepository
+import com.yondex.archivo.data.repository.formatFileSize
 import com.yondex.archivo.domain.model.LibraryFile
 import com.yondex.archivo.domain.model.PdfAnnotation
 import com.yondex.archivo.domain.model.PdfAnnotationType
+import com.yondex.archivo.pdf.PdfCompressor
 import com.yondex.archivo.ui.components.ConfirmDialog
-import com.yondex.archivo.ui.components.SketchDropdownMenu
+import com.yondex.archivo.ui.components.SketchShape
+import com.yondex.archivo.ui.components.SketchShapeLarge
 import com.yondex.archivo.ui.components.SketchShapePill
+import com.yondex.archivo.ui.components.SketchSheetDragHandle
 import com.yondex.archivo.ui.components.TextInputDialog
 import com.yondex.archivo.ui.navigation.PdfReaderRoute
+import com.yondex.archivo.ui.pdf.CompressPdfSheet
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
@@ -104,9 +124,16 @@ private sealed interface AnnotationEdit {
 private sealed interface PdfDialog {
     data object Rename : PdfDialog
     data object DeleteFile : PdfDialog
+    data object Compress : PdfDialog
     data class AddComment(val pageIndex: Int, val x: Float, val y: Float) : PdfDialog
     data class EditComment(val annotation: PdfAnnotation) : PdfDialog
     data class DeleteAnnotation(val annotation: PdfAnnotation) : PdfDialog
+}
+
+sealed interface CompressEvent {
+    data class Success(val bytes: Long, val targetBytes: Long, val metTarget: Boolean) : CompressEvent
+    data class Failed(val message: String) : CompressEvent
+    data object AlreadySmall : CompressEvent
 }
 
 @HiltViewModel
@@ -118,8 +145,11 @@ class PdfReaderViewModel @Inject constructor(
     private val fileId = savedStateHandle.toRoute<PdfReaderRoute>().fileId
     private val _file = MutableStateFlow<LibraryFile?>(null)
     val file: StateFlow<LibraryFile?> = _file.asStateFlow()
-    private val _pages = MutableStateFlow<List<Bitmap>>(emptyList())
-    val pages: StateFlow<List<Bitmap>> = _pages.asStateFlow()
+    private val _pageCount = MutableStateFlow(0)
+    val pageCount: StateFlow<Int> = _pageCount.asStateFlow()
+    /** Bumped when the underlying PDF file changes (e.g. compress) so pages reload. */
+    private val _documentEpoch = MutableStateFlow(0)
+    val documentEpoch: StateFlow<Int> = _documentEpoch.asStateFlow()
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
     private val _deleted = MutableStateFlow(false)
@@ -130,6 +160,15 @@ class PdfReaderViewModel @Inject constructor(
     val canUndo: StateFlow<Boolean> = _canUndo.asStateFlow()
     private val _canRedo = MutableStateFlow(false)
     val canRedo: StateFlow<Boolean> = _canRedo.asStateFlow()
+    private val _compressing = MutableStateFlow(false)
+    val compressing: StateFlow<Boolean> = _compressing.asStateFlow()
+    private val _compressEvents = MutableSharedFlow<CompressEvent>(extraBufferCapacity = 1)
+    val compressEvents: SharedFlow<CompressEvent> = _compressEvents
+    private val pdfMutex = Mutex()
+    private var pdfDescriptor: ParcelFileDescriptor? = null
+    private var pdfRenderer: PdfRenderer? = null
+    /** Single-thread dispatcher — PdfRenderer is not thread-safe. */
+    private val pdfDispatcher = Dispatchers.IO.limitedParallelism(1)
 
     val annotations: StateFlow<List<PdfAnnotation>> = annotationRepository.observeForFile(fileId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -140,9 +179,19 @@ class PdfReaderViewModel @Inject constructor(
             _file.value = item
             if (item != null) {
                 libraryRepository.touch(fileId)
-                _pages.value = renderPdf(File(item.path))
+                _pageCount.value = openPdf(File(item.path))
             }
             _loading.value = false
+        }
+    }
+
+    /** Renders one page on demand. Caller owns the returned bitmap (must recycle). */
+    suspend fun renderPage(index: Int): Bitmap? {
+        if (index !in 0 until _pageCount.value) return null
+        return withContext(pdfDispatcher) {
+            pdfMutex.withLock {
+                runCatching { renderPageLocked(index) }.getOrNull()
+            }
         }
     }
 
@@ -154,6 +203,33 @@ class PdfReaderViewModel @Inject constructor(
     fun delete() = viewModelScope.launch {
         libraryRepository.delete(fileId)
         _deleted.value = true
+    }
+
+    fun compress(maxBytes: Long = PdfCompressor.TARGET_100KB) = viewModelScope.launch {
+        if (_compressing.value) return@launch
+        val current = _file.value ?: return@launch
+        if (current.sizeBytes in 1..maxBytes) {
+            _compressEvents.emit(CompressEvent.AlreadySmall)
+            return@launch
+        }
+        _compressing.value = true
+        runCatching {
+            libraryRepository.compressPdf(fileId, maxBytes)
+        }.onSuccess { (updated, result) ->
+            _file.value = updated
+            _pageCount.value = openPdf(File(updated.path))
+            _documentEpoch.value = _documentEpoch.value + 1
+            _compressEvents.emit(
+                CompressEvent.Success(
+                    bytes = result.bytes,
+                    targetBytes = maxBytes,
+                    metTarget = result.metTarget,
+                ),
+            )
+        }.onFailure { e ->
+            _compressEvents.emit(CompressEvent.Failed(e.message ?: "unknown"))
+        }
+        _compressing.value = false
     }
 
     fun addHighlight(pageIndex: Int, left: Float, top: Float, right: Float, bottom: Float) =
@@ -227,30 +303,51 @@ class PdfReaderViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        _pages.value.forEach { if (!it.isRecycled) it.recycle() }
+        viewModelScope.launch(pdfDispatcher) {
+            pdfMutex.withLock { closePdfLocked() }
+        }
         super.onCleared()
     }
 
-    private suspend fun renderPdf(file: File): List<Bitmap> = withContext(Dispatchers.IO) {
-        if (!file.exists()) return@withContext emptyList()
-        val descriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
-        val renderer = PdfRenderer(descriptor)
-        buildList {
-            for (i in 0 until renderer.pageCount) {
-                val page = renderer.openPage(i)
-                val scale = 2
-                val bitmap = Bitmap.createBitmap(page.width * scale, page.height * scale, Bitmap.Config.ARGB_8888)
-                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                page.close()
-                add(bitmap)
-            }
-            renderer.close()
-            descriptor.close()
+    private suspend fun openPdf(file: File): Int = withContext(pdfDispatcher) {
+        pdfMutex.withLock {
+            closePdfLocked()
+            if (!file.exists()) return@withLock 0
+            val descriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
+            val renderer = PdfRenderer(descriptor)
+            pdfDescriptor = descriptor
+            pdfRenderer = renderer
+            renderer.pageCount
+        }
+    }
+
+    private fun closePdfLocked() {
+        runCatching { pdfRenderer?.close() }
+        runCatching { pdfDescriptor?.close() }
+        pdfRenderer = null
+        pdfDescriptor = null
+    }
+
+    private fun renderPageLocked(index: Int): Bitmap {
+        val renderer = pdfRenderer ?: error("PDF not open")
+        val page = renderer.openPage(index)
+        try {
+            val longest = max(page.width, page.height).coerceAtLeast(1)
+            val scale = min(2f, PAGE_MAX_DIMENSION.toFloat() / longest)
+            val width = (page.width * scale).toInt().coerceAtLeast(1)
+            val height = (page.height * scale).toInt().coerceAtLeast(1)
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            AndroidCanvas(bitmap).drawColor(AndroidColor.WHITE)
+            page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+            return bitmap
+        } finally {
+            page.close()
         }
     }
 
     companion object {
         private const val MAX_HISTORY = 40
+        private const val PAGE_MAX_DIMENSION = 1600
     }
 }
 
@@ -262,17 +359,41 @@ fun PdfReaderScreen(
     viewModel: PdfReaderViewModel = hiltViewModel(),
 ) {
     val file by viewModel.file.collectAsStateWithLifecycle()
-    val pages by viewModel.pages.collectAsStateWithLifecycle()
+    val pageCount by viewModel.pageCount.collectAsStateWithLifecycle()
+    val documentEpoch by viewModel.documentEpoch.collectAsStateWithLifecycle()
     val loading by viewModel.loading.collectAsStateWithLifecycle()
     val deleted by viewModel.deleted.collectAsStateWithLifecycle()
     val annotations by viewModel.annotations.collectAsStateWithLifecycle()
     val canUndo by viewModel.canUndo.collectAsStateWithLifecycle()
     val canRedo by viewModel.canRedo.collectAsStateWithLifecycle()
+    val compressing by viewModel.compressing.collectAsStateWithLifecycle()
     var tool by remember { mutableStateOf(PdfTool.VIEW) }
     var menuOpen by remember { mutableStateOf(false) }
     var dialog by remember { mutableStateOf<PdfDialog?>(null) }
+    val context = LocalContext.current
 
     LaunchedEffect(deleted) { if (deleted) onBack() }
+    LaunchedEffect(Unit) {
+        viewModel.compressEvents.collect { event ->
+            val message = when (event) {
+                is CompressEvent.Success -> if (event.metTarget) {
+                    context.getString(R.string.compress_success, formatFileSize(event.bytes))
+                } else {
+                    context.getString(
+                        R.string.compress_success_near,
+                        formatFileSize(event.bytes),
+                        formatFileSize(event.targetBytes),
+                    )
+                }
+                is CompressEvent.Failed -> context.getString(R.string.compress_failed, event.message)
+                CompressEvent.AlreadySmall -> context.getString(R.string.compress_already_small)
+            }
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            if (event is CompressEvent.Success || event is CompressEvent.AlreadySmall) {
+                dialog = null
+            }
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -299,48 +420,15 @@ fun PdfReaderScreen(
                             contentDescription = stringResource(R.string.action_redo),
                         )
                     }
-                    IconButton(
-                        onClick = { file?.id?.let(onSplit) },
-                        enabled = file != null && pages.isNotEmpty(),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_split),
-                            contentDescription = stringResource(R.string.split_action),
-                        )
-                    }
-                    Box {
-                        IconButton(onClick = { menuOpen = true }) {
-                            Icon(Icons.Sharp.MoreVert, contentDescription = stringResource(R.string.action_more))
-                        }
-                        SketchDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_rename)) },
-                                leadingIcon = {
-                                    Icon(painter = painterResource(R.drawable.ic_rename), contentDescription = null)
-                                },
-                                onClick = {
-                                    menuOpen = false
-                                    dialog = PdfDialog.Rename
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_delete)) },
-                                leadingIcon = {
-                                    Icon(painter = painterResource(R.drawable.ic_delete), contentDescription = null)
-                                },
-                                onClick = {
-                                    menuOpen = false
-                                    dialog = PdfDialog.DeleteFile
-                                },
-                            )
-                        }
+                    IconButton(onClick = { menuOpen = true }) {
+                        Icon(Icons.Sharp.MoreVert, contentDescription = stringResource(R.string.action_more))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
             )
         },
         bottomBar = {
-            if (!loading && pages.isNotEmpty()) {
+            if (!loading && pageCount > 0) {
                 PdfToolBar(
                     selected = tool,
                     onSelect = { tool = it },
@@ -357,7 +445,7 @@ fun PdfReaderScreen(
             loading -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            pages.isEmpty() -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+            pageCount <= 0 -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.reader_open_failed))
             }
             else -> LazyColumn(
@@ -365,13 +453,13 @@ fun PdfReaderScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize().padding(padding),
             ) {
-                itemsIndexed(pages, key = { index, _ -> index }) { index, bitmap ->
-                    val pageAnnotations = annotations.filter { it.pageIndex == index }
-                    AnnotatedPdfPage(
-                        bitmap = bitmap,
-                        pageIndex = index,
-                        annotations = pageAnnotations,
+                items(pageCount, key = { "$documentEpoch-$it" }) { index ->
+                    PdfPageItem(
+                        index = index,
+                        documentEpoch = documentEpoch,
+                        annotations = annotations.filter { it.pageIndex == index },
                         tool = tool,
+                        renderPage = viewModel::renderPage,
                         onHighlight = { left, top, right, bottom ->
                             viewModel.addHighlight(index, left, top, right, bottom)
                         },
@@ -393,6 +481,30 @@ fun PdfReaderScreen(
         }
     }
 
+    if (menuOpen) {
+        PdfActionsSheet(
+            canCompress = file != null && pageCount > 0 && !compressing,
+            canSplit = file != null && pageCount > 0,
+            onDismiss = { menuOpen = false },
+            onCompress = {
+                menuOpen = false
+                dialog = PdfDialog.Compress
+            },
+            onSplit = {
+                menuOpen = false
+                file?.id?.let(onSplit)
+            },
+            onRename = {
+                menuOpen = false
+                dialog = PdfDialog.Rename
+            },
+            onDelete = {
+                menuOpen = false
+                dialog = PdfDialog.DeleteFile
+            },
+        )
+    }
+
     when (val current = dialog) {
         PdfDialog.Rename -> TextInputDialog(
             title = stringResource(R.string.rename_library_file),
@@ -406,6 +518,12 @@ fun PdfReaderScreen(
             message = stringResource(R.string.delete_library_file_message, file?.title.orEmpty()),
             onDismiss = { dialog = null },
             onConfirm = { dialog = null; viewModel.delete() },
+        )
+        PdfDialog.Compress -> CompressPdfSheet(
+            currentBytes = file?.sizeBytes ?: 0L,
+            compressing = compressing,
+            onDismiss = { if (!compressing) dialog = null },
+            onCompress = { targetBytes -> viewModel.compress(targetBytes) },
         )
         is PdfDialog.AddComment -> TextInputDialog(
             title = stringResource(R.string.pdf_add_comment),
@@ -437,6 +555,186 @@ fun PdfReaderScreen(
             },
         )
         null -> Unit
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PdfActionsSheet(
+    canCompress: Boolean,
+    canSplit: Boolean,
+    onDismiss: () -> Unit,
+    onCompress: () -> Unit,
+    onSplit: () -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = SketchShapeLarge,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
+        dragHandle = { SketchSheetDragHandle() },
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 12.dp, vertical = 16.dp),
+        ) {
+            Text(
+                stringResource(R.string.action_more),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            )
+            ActionMenuRow(
+                title = stringResource(R.string.compress_action),
+                iconRes = R.drawable.ic_compress,
+                enabled = canCompress,
+                onClick = onCompress,
+            )
+            ActionMenuRow(
+                title = stringResource(R.string.split_action),
+                iconRes = R.drawable.ic_split,
+                enabled = canSplit,
+                onClick = onSplit,
+            )
+            ActionMenuRow(
+                title = stringResource(R.string.action_rename),
+                iconRes = R.drawable.ic_rename,
+                onClick = onRename,
+            )
+            ActionMenuRow(
+                title = stringResource(R.string.action_delete),
+                iconRes = R.drawable.ic_delete,
+                onClick = onDelete,
+            )
+            Spacer(Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+private fun ActionMenuRow(
+    title: String,
+    @DrawableRes iconRes: Int,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(SketchShape)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(40.dp)
+                .clip(SketchShape)
+                .background(
+                    if (enabled) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                ),
+        ) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                tint = if (enabled) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Text(
+            title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = if (enabled) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 14.dp),
+        )
+    }
+}
+
+@Composable
+private fun PdfPageItem(
+    index: Int,
+    documentEpoch: Int,
+    annotations: List<PdfAnnotation>,
+    tool: PdfTool,
+    renderPage: suspend (Int) -> Bitmap?,
+    onHighlight: (left: Float, top: Float, right: Float, bottom: Float) -> Unit,
+    onCommentTap: (x: Float, y: Float) -> Unit,
+    onAnnotationClick: (PdfAnnotation) -> Unit,
+    onAnnotationLongClick: (PdfAnnotation) -> Unit,
+) {
+    var bitmap by remember(index, documentEpoch) { mutableStateOf<Bitmap?>(null) }
+    var failed by remember(index, documentEpoch) { mutableStateOf(false) }
+    val held = remember(index, documentEpoch) { arrayOfNulls<Bitmap>(1) }
+    var retryToken by remember(index, documentEpoch) { mutableStateOf(0) }
+
+    LaunchedEffect(index, documentEpoch, retryToken) {
+        failed = false
+        val rendered = renderPage(index)
+        held[0]?.takeIf { !it.isRecycled && it !== rendered }?.recycle()
+        held[0] = rendered
+        bitmap = rendered
+        failed = rendered == null
+    }
+    DisposableEffect(index, documentEpoch) {
+        onDispose {
+            held[0]?.takeIf { !it.isRecycled }?.recycle()
+            held[0] = null
+        }
+    }
+
+    val current = bitmap
+    when {
+        current != null && !current.isRecycled -> AnnotatedPdfPage(
+            bitmap = current,
+            pageIndex = index,
+            annotations = annotations,
+            tool = tool,
+            onHighlight = onHighlight,
+            onCommentTap = onCommentTap,
+            onAnnotationClick = onAnnotationClick,
+            onAnnotationLongClick = onAnnotationLongClick,
+        )
+        failed -> Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(0.72f)
+                .background(MaterialTheme.colorScheme.surface),
+        ) {
+            TextButton(onClick = { retryToken++ }) {
+                Text(stringResource(R.string.action_retry))
+            }
+        }
+        else -> Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(0.72f)
+                .background(MaterialTheme.colorScheme.surface),
+        ) {
+            CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 2.dp)
+        }
     }
 }
 

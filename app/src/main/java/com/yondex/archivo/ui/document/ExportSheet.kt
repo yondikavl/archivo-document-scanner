@@ -18,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,7 +36,8 @@ import com.yondex.archivo.ui.components.SketchChipGap
 import com.yondex.archivo.ui.components.SketchFilledButton
 import com.yondex.archivo.ui.components.SketchItemGap
 import com.yondex.archivo.ui.components.SketchOutlinedButton
-import com.yondex.archivo.ui.components.SketchShape
+import com.yondex.archivo.ui.components.SketchShapeLarge
+import com.yondex.archivo.ui.components.SketchSheetDragHandle
 import com.yondex.archivo.ui.label
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,20 +53,15 @@ fun ExportSheet(
     var options by remember { mutableStateOf(initial) }
     val isImage = options.format == ExportFormat.JPG || options.format == ExportFormat.PNG
     val canSave = !isImage || canSaveImages
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        shape = SketchShape,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        sheetState = sheetState,
+        shape = SketchShapeLarge,
+        containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp,
-        dragHandle = {
-            Box(
-                Modifier
-                    .padding(vertical = 12.dp)
-                    .size(width = 40.dp, height = 4.dp)
-                    .background(MaterialTheme.colorScheme.outlineVariant, SketchShape),
-            )
-        },
+        dragHandle = { SketchSheetDragHandle() },
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(SketchItemGap),
