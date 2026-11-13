@@ -20,9 +20,11 @@ import androidx.annotation.DrawableRes
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,7 +74,12 @@ fun TagLabel(tag: Tag, modifier: Modifier = Modifier) {
     ) {
         TagDot(color, Modifier.size(6.dp))
         Spacer(Modifier.width(6.dp))
-        Text(tag.name, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+        Text(
+            tag.name,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+        )
     }
 }
 
@@ -149,7 +156,12 @@ fun EmptyState(
             )
         }
         Spacer(Modifier.height(22.dp))
-        Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+        Text(
+            title,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+        )
         Spacer(Modifier.height(8.dp))
         Text(
             message,
@@ -197,18 +209,22 @@ private fun SketchFrame(
     content: @Composable () -> Unit,
 ) {
     val shape = SketchShape
-    Box(
-        modifier
-            .clip(shape)
-            .background(
-                if (selected) {
-                    MaterialTheme.colorScheme.secondaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surface
-                },
-            ),
+    CompositionLocalProvider(
+        LocalContentColor provides MaterialTheme.colorScheme.onSurface,
     ) {
-        content()
+        Box(
+            modifier
+                .clip(shape)
+                .background(
+                    if (selected) {
+                        MaterialTheme.colorScheme.secondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    },
+                ),
+        ) {
+            content()
+        }
     }
 }
 
@@ -313,6 +329,7 @@ fun DocumentListItem(
                 Text(
                     document.title,
                     style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -368,6 +385,7 @@ fun FolderItem(
                 Text(
                     folder.name,
                     style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

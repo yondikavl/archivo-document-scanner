@@ -407,7 +407,11 @@ private fun PermissionRationale(
     onClose: () -> Unit,
     onReview: (() -> Unit)?,
 ) {
-    Surface(Modifier.fillMaxSize()) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -416,15 +420,21 @@ private fun PermissionRationale(
             Icon(
                 painter = painterResource(R.drawable.ic_camera),
                 contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(64.dp),
             )
             Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.camera_permission_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(R.string.camera_permission_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
             Spacer(Modifier.height(8.dp))
             Text(
                 stringResource(R.string.camera_permission_message),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(24.dp))
             SketchFilledButton(onClick = onRequest) { Text(stringResource(R.string.allow_camera)) }

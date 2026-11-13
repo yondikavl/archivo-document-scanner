@@ -3,7 +3,10 @@ package com.yondex.archivo.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TopAppBarColors
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -53,17 +56,17 @@ private val LightColorScheme = lightColorScheme(
 
 private val DarkColorScheme = darkColorScheme(
     primary = ArchivoGreen80,
-    onPrimary = ArchivoOnGreenContainer,
+    onPrimary = Color(0xFF00391F),
     primaryContainer = ArchivoGreenContainerDark,
     onPrimaryContainer = ArchivoOnGreenContainerDark,
     secondary = ArchivoSecondary80,
-    onSecondary = Color(0xFF0E2A1C),
+    onSecondary = Color(0xFF1A1A1A),
     secondaryContainer = ArchivoSecondaryContainerDark,
     onSecondaryContainer = ArchivoSecondary80,
     tertiary = ArchivoTertiary80,
-    onTertiary = Color(0xFF111111),
+    onTertiary = Color(0xFF1A1A1A),
     tertiaryContainer = ArchivoTertiaryContainerDark,
-    onTertiaryContainer = ArchivoTertiary80,
+    onTertiaryContainer = Color(0xFFFFF3A3),
     background = ArchivoBackgroundDark,
     onBackground = Color(0xFFE2EBE5),
     surface = ArchivoSurfaceDark,
@@ -121,4 +124,20 @@ fun ArchivoTheme(
     ) {
         ArchivoDottedBackground(content = { content() })
     }
+}
+
+/** Transparent app bars that keep light/dark title & icon colors correct. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun archivoTopAppBarColors(
+    containerColor: Color = Color.Transparent,
+): TopAppBarColors {
+    val scheme = MaterialTheme.colorScheme
+    return TopAppBarDefaults.topAppBarColors(
+        containerColor = containerColor,
+        scrolledContainerColor = containerColor,
+        navigationIconContentColor = scheme.onSurface,
+        titleContentColor = scheme.onSurface,
+        actionIconContentColor = scheme.onSurface,
+    )
 }

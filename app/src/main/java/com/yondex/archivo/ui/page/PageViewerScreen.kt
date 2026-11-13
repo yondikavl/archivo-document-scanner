@@ -147,7 +147,7 @@ fun PageViewerScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
+                colors = com.yondex.archivo.ui.theme.archivoTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ),
                 navigationIcon = {

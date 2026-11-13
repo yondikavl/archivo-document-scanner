@@ -424,7 +424,9 @@ fun PdfReaderScreen(
                         Icon(Icons.Sharp.MoreVert, contentDescription = stringResource(R.string.action_more))
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
+                colors = com.yondex.archivo.ui.theme.archivoTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
             )
         },
         bottomBar = {

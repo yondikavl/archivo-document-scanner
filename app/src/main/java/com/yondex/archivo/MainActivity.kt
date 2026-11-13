@@ -83,6 +83,7 @@ class MainActivity : AppCompatActivity() {
                         Surface(
                             modifier = Modifier.fillMaxSize(),
                             color = androidx.compose.ui.graphics.Color.Transparent,
+                            contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onBackground,
                         ) {
                             OnboardingScreen(
                                 language = current.appLanguage,

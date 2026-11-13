@@ -21,12 +21,9 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.sharp.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -68,6 +65,7 @@ import com.yondex.archivo.domain.model.ExportQuality
 import com.yondex.archivo.domain.model.PageFilter
 import com.yondex.archivo.domain.model.PdfPageSize
 import com.yondex.archivo.domain.model.ThemeMode
+import com.yondex.archivo.ui.components.DayNightCornerOrb
 import com.yondex.archivo.ui.components.SketchShape
 import com.yondex.archivo.ui.components.SketchShapeLarge
 import com.yondex.archivo.ui.components.SketchSheetDragHandle
@@ -97,45 +95,37 @@ class SettingsViewModel @Inject constructor(private val repository: SettingsRepo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     var legalDoc by remember { mutableStateOf<LegalDocument?>(null) }
 
-    Scaffold(
-        containerColor = Color.Transparent,
-        contentWindowInsets = WindowInsets.safeDrawing.only(
-            WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
-        ),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.settings),
-                        style = MaterialTheme.typography.headlineSmall,
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                ),
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Sharp.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back),
+    Box(Modifier.fillMaxSize()) {
+        DayNightCornerOrb()
+        Scaffold(
+            containerColor = Color.Transparent,
+            contentWindowInsets = WindowInsets.safeDrawing.only(
+                WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
+            ),
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            stringResource(R.string.settings),
+                            style = MaterialTheme.typography.headlineSmall,
                         )
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
+                    },
+                    colors = com.yondex.archivo.ui.theme.archivoTopAppBarColors(),
+                )
+            },
+        ) { padding ->
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
             SettingsGroup(
                 title = stringResource(R.string.section_appearance),
                 iconRes = R.drawable.ic_appearance,
@@ -287,7 +277,8 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(20.dp))
+            }
         }
     }
 
@@ -330,6 +321,7 @@ private fun ClickSetting(
             title,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
         Icon(
@@ -402,6 +394,7 @@ private fun SettingsGroup(
             Surface(
                 shape = SketchShapeLarge,
                 color = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
                 tonalElevation = 0.dp,
                 shadowElevation = 0.dp,
                 modifier = Modifier.fillMaxWidth(),
@@ -467,6 +460,7 @@ private fun <T> OptionSetting(
             title,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
         Text(
@@ -589,7 +583,12 @@ private fun SwitchSetting(
             }
         }
         Column(Modifier.weight(1f).padding(end = 12.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
             Text(
                 summary,
                 style = MaterialTheme.typography.bodyMedium,

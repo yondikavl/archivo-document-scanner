@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -110,23 +109,26 @@ fun SketchCard(
     } else {
         paper
     }
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(container)
-            .then(
-                if (onClick != null) {
-                    Modifier.clickable(
-                        interactionSource = interaction,
-                        indication = ripple(),
-                        onClick = onClick,
-                    )
-                } else {
-                    Modifier
-                },
-            ),
-        content = content,
-    )
+    val contentColor = MaterialTheme.colorScheme.onSurface
+    CompositionLocalProvider(LocalContentColor provides contentColor) {
+        Box(
+            modifier = modifier
+                .clip(shape)
+                .background(container)
+                .then(
+                    if (onClick != null) {
+                        Modifier.clickable(
+                            interactionSource = interaction,
+                            indication = ripple(),
+                            onClick = onClick,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ),
+            content = content,
+        )
+    }
 }
 
 @Composable
@@ -347,6 +349,7 @@ fun SketchBottomBar(
     Surface(
         shape = SketchShapeTop,
         color = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         shadowElevation = 0.dp,
         tonalElevation = 0.dp,
         modifier = modifier.fillMaxWidth(),
@@ -446,10 +449,12 @@ fun SketchAlertDialog(
         onDismissRequest = onDismissRequest,
         properties = properties,
     ) {
+        val onSurface = MaterialTheme.colorScheme.onSurface
+        val onVariant = MaterialTheme.colorScheme.onSurfaceVariant
         Surface(
             shape = SketchShapeLarge,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            contentColor = AlertDialogDefaults.textContentColor,
+            contentColor = onVariant,
             tonalElevation = 3.dp,
             shadowElevation = 0.dp,
             modifier = modifier.widthIn(min = 280.dp, max = 560.dp),
@@ -458,7 +463,7 @@ fun SketchAlertDialog(
                 if (title != null) {
                     Box(Modifier.padding(horizontal = 24.dp).padding(bottom = 12.dp)) {
                         CompositionLocalProvider(
-                            LocalContentColor provides AlertDialogDefaults.titleContentColor,
+                            LocalContentColor provides onSurface,
                             LocalTextStyle provides MaterialTheme.typography.headlineSmall,
                             content = title,
                         )
@@ -467,7 +472,7 @@ fun SketchAlertDialog(
                 if (text != null) {
                     Box(Modifier.padding(horizontal = 24.dp).padding(bottom = 12.dp)) {
                         CompositionLocalProvider(
-                            LocalContentColor provides AlertDialogDefaults.textContentColor,
+                            LocalContentColor provides onVariant,
                             LocalTextStyle provides MaterialTheme.typography.bodyMedium,
                             content = text,
                         )

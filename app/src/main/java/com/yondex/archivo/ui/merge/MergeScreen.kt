@@ -196,7 +196,7 @@ fun MergeScreen(
                         Icon(Icons.AutoMirrored.Sharp.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                colors = com.yondex.archivo.ui.theme.archivoTopAppBarColors(),
             )
         },
     ) { padding ->

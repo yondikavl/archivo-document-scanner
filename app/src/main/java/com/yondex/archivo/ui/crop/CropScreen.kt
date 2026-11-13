@@ -66,9 +66,7 @@ fun CropScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.crop_and_filter)) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                ),
+                colors = com.yondex.archivo.ui.theme.archivoTopAppBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Sharp.ArrowBack, contentDescription = stringResource(R.string.action_back))

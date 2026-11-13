@@ -95,9 +95,7 @@ fun TagsScreen(onBack: () -> Unit, viewModel: TagsViewModel = hiltViewModel()) {
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.manage_tags)) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                ),
+                colors = com.yondex.archivo.ui.theme.archivoTopAppBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Sharp.ArrowBack, contentDescription = stringResource(R.string.action_back))

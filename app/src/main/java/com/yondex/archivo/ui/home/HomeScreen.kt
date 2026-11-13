@@ -84,6 +84,7 @@ import com.yondex.archivo.domain.model.LibraryFile
 import com.yondex.archivo.domain.model.SortOrder
 import com.yondex.archivo.domain.model.ViewMode
 import com.yondex.archivo.ui.components.ConfirmDialog
+import com.yondex.archivo.ui.components.DayNightCornerOrb
 import com.yondex.archivo.ui.components.DocumentGridCard
 import com.yondex.archivo.ui.components.DocumentListItem
 import com.yondex.archivo.ui.components.EmptyState
@@ -190,44 +191,46 @@ fun HomeScreen(
         wasCompressing = compressing
     }
 
-    Scaffold(
-        topBar = {
-            when {
-                state.isSelecting -> SelectionTopBar(
-                    count = state.selectionCount,
-                    canMerge = state.canMerge,
-                    hasDocuments = state.selection.isNotEmpty(),
-                    canDelete = state.canDeleteSelection,
-                    onClose = viewModel::clearSelection,
-                    onSelectAll = viewModel::selectAll,
-                    onMerge = {
-                        onMerge(viewModel.mergeDocumentIds(), viewModel.mergeLibraryIds())
-                        viewModel.clearSelection()
-                    },
-                    onTag = { dialog = HomeDialog.TagDocuments },
-                    onMove = { dialog = HomeDialog.MoveDocuments },
-                    onDelete = { dialog = HomeDialog.DeleteDocuments },
-                )
-                onBack != null -> FolderTopBar(
-                    title = state.currentFolder?.name.orEmpty(),
-                    viewMode = state.viewMode,
-                    sortOrder = state.sortOrder,
-                    onBack = onBack,
-                    onSearch = onSearch,
-                    onToggleView = {
-                        viewModel.setViewMode(if (state.viewMode == ViewMode.GRID) ViewMode.LIST else ViewMode.GRID)
-                    },
-                    onSort = viewModel::setSortOrder,
-                    onCreateFolder = { dialog = HomeDialog.CreateFolder },
-                    onManageTags = onManageTags,
-                )
-            }
-        },
-        containerColor = Color.Transparent,
-        contentWindowInsets = WindowInsets.safeDrawing.only(
-            WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
-        ),
-    ) { padding ->
+    Box(Modifier.fillMaxSize()) {
+        DayNightCornerOrb(visible = onBack == null && !state.isSelecting)
+        Scaffold(
+            topBar = {
+                when {
+                    state.isSelecting -> SelectionTopBar(
+                        count = state.selectionCount,
+                        canMerge = state.canMerge,
+                        hasDocuments = state.selection.isNotEmpty(),
+                        canDelete = state.canDeleteSelection,
+                        onClose = viewModel::clearSelection,
+                        onSelectAll = viewModel::selectAll,
+                        onMerge = {
+                            onMerge(viewModel.mergeDocumentIds(), viewModel.mergeLibraryIds())
+                            viewModel.clearSelection()
+                        },
+                        onTag = { dialog = HomeDialog.TagDocuments },
+                        onMove = { dialog = HomeDialog.MoveDocuments },
+                        onDelete = { dialog = HomeDialog.DeleteDocuments },
+                    )
+                    onBack != null -> FolderTopBar(
+                        title = state.currentFolder?.name.orEmpty(),
+                        viewMode = state.viewMode,
+                        sortOrder = state.sortOrder,
+                        onBack = onBack,
+                        onSearch = onSearch,
+                        onToggleView = {
+                            viewModel.setViewMode(if (state.viewMode == ViewMode.GRID) ViewMode.LIST else ViewMode.GRID)
+                        },
+                        onSort = viewModel::setSortOrder,
+                        onCreateFolder = { dialog = HomeDialog.CreateFolder },
+                        onManageTags = onManageTags,
+                    )
+                }
+            },
+            containerColor = Color.Transparent,
+            contentWindowInsets = WindowInsets.safeDrawing.only(
+                WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
+            ),
+        ) { padding ->
         val isGrid = state.viewMode == ViewMode.GRID
         val isAllTab = state.filter == HomeFilter.ALL
         val previewFiles = if (isAllTab) state.libraryFiles.take(ALL_PREVIEW_LIMIT) else state.libraryFiles
@@ -509,6 +512,7 @@ fun HomeScreen(
                     }
                 }
             }
+        }
     }
 
     when (val current = dialog) {
@@ -647,6 +651,7 @@ private fun GreetingHeader() {
         Text(
             greeting,
             style = MaterialTheme.typography.displaySmall,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(Modifier.height(6.dp))
         Text(
@@ -672,6 +677,7 @@ private fun FeatureHighlights(
             stringResource(R.string.feature_tools),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(SketchItemGap), modifier = Modifier.fillMaxWidth()) {
             FeatureToolCard(
@@ -754,6 +760,7 @@ private fun FeatureToolCard(
                 Icon(
                     painter = painterResource(iconRes),
                     contentDescription = null,
+                    tint = content,
                     modifier = Modifier.size(22.dp),
                 )
             }
@@ -762,6 +769,7 @@ private fun FeatureToolCard(
                     title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
+                    color = content,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1130,18 +1138,21 @@ private fun CategoryRow(
                     if (viewMode == ViewMode.GRID) R.drawable.ic_list else R.drawable.ic_grid,
                 ),
                 contentDescription = stringResource(R.string.change_view),
+                tint = MaterialTheme.colorScheme.onSurface,
             )
         }
         IconButton(onClick = onCreateFolder) {
             Icon(
                 painter = painterResource(R.drawable.ic_folder_add),
                 contentDescription = stringResource(R.string.new_folder),
+                tint = MaterialTheme.colorScheme.onSurface,
             )
         }
         IconButton(onClick = onManageTags) {
             Icon(
                 painter = painterResource(R.drawable.ic_tag),
                 contentDescription = stringResource(R.string.manage_tags),
+                tint = MaterialTheme.colorScheme.onSurface,
             )
         }
     }
@@ -1217,6 +1228,7 @@ private fun LibraryFileGridCard(
                 Text(
                     file.title,
                     style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1265,6 +1277,7 @@ private fun LibraryFileRow(
                 Text(
                     file.title,
                     style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1281,7 +1294,11 @@ private fun LibraryFileRow(
                 )
             }
             IconButton(onClick = onMore) {
-                Icon(Icons.Sharp.MoreVert, contentDescription = stringResource(R.string.action_more))
+                Icon(
+                    Icons.Sharp.MoreVert,
+                    contentDescription = stringResource(R.string.action_more),
+                    tint = MaterialTheme.colorScheme.onSurface,
+                )
             }
         }
     }
@@ -1335,7 +1352,7 @@ private fun FolderTopBar(
     var moreMenu by remember { mutableStateOf(false) }
     TopAppBar(
         title = { Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 1) },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+        colors = com.yondex.archivo.ui.theme.archivoTopAppBarColors(),
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Sharp.ArrowBack, contentDescription = stringResource(R.string.action_back))

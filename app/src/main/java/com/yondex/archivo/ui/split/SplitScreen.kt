@@ -273,7 +273,7 @@ fun SplitScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                colors = com.yondex.archivo.ui.theme.archivoTopAppBarColors(),
             )
         },
     ) { padding ->

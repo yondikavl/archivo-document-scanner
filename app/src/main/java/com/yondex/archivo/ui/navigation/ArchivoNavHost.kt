@@ -217,7 +217,7 @@ fun ArchivoNavHost() {
                 TagsScreen(onBack = dropUnlessResumed(block = back))
             }
             composable<SettingsRoute> {
-                SettingsScreen(onBack = dropUnlessResumed { openTab(MainTab.Home) })
+                SettingsScreen()
             }
             composable<QrScannerRoute> {
                 QrScannerScreen(onClose = dropUnlessResumed { openTab(MainTab.Home) })

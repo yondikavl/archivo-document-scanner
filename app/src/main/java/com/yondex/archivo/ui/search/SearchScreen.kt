@@ -89,7 +89,11 @@ fun SearchScreen(
     val tagFilter by viewModel.tagFilter.collectAsStateWithLifecycle()
     val focusRequester = remember { FocusRequester() }
     var folderMenu by remember { mutableStateOf(false) }
-    val highlight = SpanStyle(fontWeight = FontWeight.Bold, background = MaterialTheme.colorScheme.tertiaryContainer)
+    val highlight = SpanStyle(
+        fontWeight = FontWeight.Bold,
+        background = MaterialTheme.colorScheme.tertiaryContainer,
+        color = MaterialTheme.colorScheme.onTertiaryContainer,
+    )
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
@@ -97,9 +101,7 @@ fun SearchScreen(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                ),
+                colors = com.yondex.archivo.ui.theme.archivoTopAppBarColors(),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Sharp.ArrowBack, contentDescription = stringResource(R.string.action_back))
@@ -124,6 +126,11 @@ fun SearchScreen(
                             unfocusedContainerColor = Color.Transparent,
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            cursorColor = MaterialTheme.colorScheme.primary,
+                            focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         ),
                         modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                     )
