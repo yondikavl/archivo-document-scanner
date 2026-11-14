@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlin.math.abs
 import kotlin.math.cos
-import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sign
 import kotlin.math.sin
@@ -80,13 +79,31 @@ private fun createSquircleRectPath(
 ): Path {
     val w = size.width
     val h = size.height
-    val maxR = min(w, h) / 2f
-    fun clamp(r: Float) = r.coerceIn(0f, maxR)
-
-    val tl = clamp(topLeft)
-    val tr = clamp(topRight)
-    val br = clamp(bottomRight)
-    val bl = clamp(bottomLeft)
+    // Allow a single side to use the full edge length (e.g. top-only bottom bar).
+    var tl = topLeft.coerceAtLeast(0f)
+    var tr = topRight.coerceAtLeast(0f)
+    var br = bottomRight.coerceAtLeast(0f)
+    var bl = bottomLeft.coerceAtLeast(0f)
+    if (tl + tr > w && tl + tr > 0f) {
+        val s = w / (tl + tr)
+        tl *= s
+        tr *= s
+    }
+    if (bl + br > w && bl + br > 0f) {
+        val s = w / (bl + br)
+        bl *= s
+        br *= s
+    }
+    if (tl + bl > h && tl + bl > 0f) {
+        val s = h / (tl + bl)
+        tl *= s
+        bl *= s
+    }
+    if (tr + br > h && tr + br > 0f) {
+        val s = h / (tr + br)
+        tr *= s
+        br *= s
+    }
 
     val path = Path()
     // Begin at end of top-left corner on the top edge.

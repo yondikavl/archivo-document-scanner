@@ -3,16 +3,19 @@ package com.yondex.archivo.ui.navigation
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -88,6 +91,10 @@ fun ArchivoNavHost() {
         }
     }
 
+    val bottomNavInset = bottomNavInset(showBottomBar)
+    val layoutDirection = LocalLayoutDirection.current
+
+    CompositionLocalProvider(LocalBottomNavInset provides bottomNavInset) {
     Scaffold(
         containerColor = Color.Transparent,
         contentWindowInsets = WindowInsets(0),
@@ -100,10 +107,17 @@ fun ArchivoNavHost() {
             }
         },
     ) { padding ->
+        // Let content draw under the rounded bottom nav so corners aren't a hard rect cut.
+        val contentPadding = PaddingValues(
+            start = padding.calculateLeftPadding(layoutDirection),
+            top = padding.calculateTopPadding(),
+            end = padding.calculateRightPadding(layoutDirection),
+            bottom = 0.dp,
+        )
         NavHost(
             navController = navController,
             startDestination = HomeRoute(),
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.padding(contentPadding),
             enterTransition = { fadeIn(tween(TRANSITION_MS)) },
             exitTransition = { fadeOut(tween(TRANSITION_MS)) },
             popEnterTransition = { fadeIn(tween(TRANSITION_MS)) },
@@ -223,5 +237,6 @@ fun ArchivoNavHost() {
                 QrScannerScreen(onClose = dropUnlessResumed { openTab(MainTab.Home) })
             }
         }
+    }
     }
 }

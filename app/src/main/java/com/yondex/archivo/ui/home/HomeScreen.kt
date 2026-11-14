@@ -104,6 +104,7 @@ import com.yondex.archivo.ui.components.TextInputDialog
 import com.yondex.archivo.ui.components.Thumbnail
 import com.yondex.archivo.ui.components.formatDate
 import com.yondex.archivo.ui.label
+import com.yondex.archivo.ui.navigation.LocalBottomNavInset
 import com.yondex.archivo.ui.pdf.CompressPdfSheet
 import java.util.Calendar
 
@@ -193,36 +194,36 @@ fun HomeScreen(
 
     Box(Modifier.fillMaxSize()) {
         DayNightCornerOrb(visible = onBack == null && !state.isSelecting)
-        Scaffold(
-            topBar = {
+    Scaffold(
+        topBar = {
                 when {
                     state.isSelecting -> SelectionTopBar(
                         count = state.selectionCount,
                         canMerge = state.canMerge,
                         hasDocuments = state.selection.isNotEmpty(),
                         canDelete = state.canDeleteSelection,
-                        onClose = viewModel::clearSelection,
-                        onSelectAll = viewModel::selectAll,
+                    onClose = viewModel::clearSelection,
+                    onSelectAll = viewModel::selectAll,
                         onMerge = {
                             onMerge(viewModel.mergeDocumentIds(), viewModel.mergeLibraryIds())
                             viewModel.clearSelection()
                         },
-                        onTag = { dialog = HomeDialog.TagDocuments },
-                        onMove = { dialog = HomeDialog.MoveDocuments },
-                        onDelete = { dialog = HomeDialog.DeleteDocuments },
-                    )
+                    onTag = { dialog = HomeDialog.TagDocuments },
+                    onMove = { dialog = HomeDialog.MoveDocuments },
+                    onDelete = { dialog = HomeDialog.DeleteDocuments },
+                )
                     onBack != null -> FolderTopBar(
                         title = state.currentFolder?.name.orEmpty(),
-                        viewMode = state.viewMode,
-                        sortOrder = state.sortOrder,
+                    viewMode = state.viewMode,
+                    sortOrder = state.sortOrder,
                         onBack = onBack,
-                        onSearch = onSearch,
-                        onToggleView = {
-                            viewModel.setViewMode(if (state.viewMode == ViewMode.GRID) ViewMode.LIST else ViewMode.GRID)
-                        },
-                        onSort = viewModel::setSortOrder,
-                        onCreateFolder = { dialog = HomeDialog.CreateFolder },
-                        onManageTags = onManageTags,
+                    onSearch = onSearch,
+                    onToggleView = {
+                        viewModel.setViewMode(if (state.viewMode == ViewMode.GRID) ViewMode.LIST else ViewMode.GRID)
+                    },
+                    onSort = viewModel::setSortOrder,
+                    onCreateFolder = { dialog = HomeDialog.CreateFolder },
+                    onManageTags = onManageTags,
                     )
                 }
             },
@@ -231,6 +232,7 @@ fun HomeScreen(
                 WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
             ),
         ) { padding ->
+        val bottomNavInset = LocalBottomNavInset.current
         val isGrid = state.viewMode == ViewMode.GRID
         val isAllTab = state.filter == HomeFilter.ALL
         val previewFiles = if (isAllTab) state.libraryFiles.take(ALL_PREVIEW_LIMIT) else state.libraryFiles
@@ -239,7 +241,12 @@ fun HomeScreen(
         val showMoreDocuments = isAllTab && state.documents.size > ALL_PREVIEW_LIMIT
         LazyVerticalGrid(
                 columns = if (isGrid) GridCells.Adaptive(156.dp) else GridCells.Fixed(1),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 28.dp),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 4.dp,
+                    bottom = 28.dp + bottomNavInset,
+                ),
                 horizontalArrangement = Arrangement.spacedBy(SketchItemGap),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -282,58 +289,58 @@ fun HomeScreen(
                 }
 
                 if (state.tags.isNotEmpty() && (state.filter == HomeFilter.ALL || state.filter == HomeFilter.SCANS)) {
-                    fullWidthItem("tags") {
+                fullWidthItem("tags") {
                         LazyRow(
                             horizontalArrangement = Arrangement.spacedBy(SketchChipGap),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            items(state.tags, key = { it.id }) { tag ->
+                        items(state.tags, key = { it.id }) { tag ->
                                 SketchChip(
-                                    selected = tag.id in state.tagFilter,
-                                    onClick = { viewModel.toggleTagFilter(tag.id) },
-                                    label = { Text(tag.name) },
-                                    leadingIcon = { TagDot(Color(tag.color)) },
-                                )
-                            }
+                                selected = tag.id in state.tagFilter,
+                                onClick = { viewModel.toggleTagFilter(tag.id) },
+                                label = { Text(tag.name) },
+                                leadingIcon = { TagDot(Color(tag.color)) },
+                            )
                         }
                     }
                 }
+            }
 
-                if (state.folders.isNotEmpty()) {
+            if (state.folders.isNotEmpty()) {
                     fullWidthItem("folders_header") { SectionHeader(stringResource(R.string.section_folders)) }
                     items(
                         state.folders,
                         key = { "folder_${it.folder.id}" },
                         span = { GridItemSpan(maxLineSpan) },
                     ) { entry ->
-                        Box {
-                            FolderItem(
-                                folder = entry.folder,
-                                documentCount = entry.documentCount,
-                                onClick = { onOpenFolder(entry.folder.id) },
-                                onLongClick = { folderMenu = entry.folder },
-                                modifier = Modifier.fillMaxWidth(),
-                            )
+                    Box {
+                        FolderItem(
+                            folder = entry.folder,
+                            documentCount = entry.documentCount,
+                            onClick = { onOpenFolder(entry.folder.id) },
+                            onLongClick = { folderMenu = entry.folder },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                             SketchDropdownMenu(
-                                expanded = folderMenu?.id == entry.folder.id,
-                                onDismissRequest = { folderMenu = null },
-                            ) {
-                                DropdownMenuItem(
+                            expanded = folderMenu?.id == entry.folder.id,
+                            onDismissRequest = { folderMenu = null },
+                        ) {
+                            DropdownMenuItem(
                                     text = { Text(stringResource(R.string.action_rename)) },
-                                    onClick = { dialog = HomeDialog.RenameFolder(entry.folder); folderMenu = null },
-                                )
-                                DropdownMenuItem(
+                                onClick = { dialog = HomeDialog.RenameFolder(entry.folder); folderMenu = null },
+                            )
+                            DropdownMenuItem(
                                     text = { Text(stringResource(R.string.delete_folder)) },
-                                    onClick = { dialog = HomeDialog.DeleteFolder(entry.folder); folderMenu = null },
-                                )
-                            }
+                                onClick = { dialog = HomeDialog.DeleteFolder(entry.folder); folderMenu = null },
+                            )
                         }
                     }
                 }
+            }
 
                 if (previewDocuments.isNotEmpty()) {
                     if (state.folders.isNotEmpty() || state.tagFilter.isNotEmpty() || showMoreDocuments || previewFiles.isNotEmpty()) {
-                        fullWidthItem("docs_header") {
+                    fullWidthItem("docs_header") {
                             SectionHeader(
                                 text = when {
                                     state.tagFilter.isNotEmpty() -> stringResource(R.string.section_documents_tagged)
@@ -360,16 +367,16 @@ fun HomeScreen(
                         }
                     }
                     items(previewDocuments, key = { "doc_${it.id}" }) { document ->
-                        val selected = document.id in state.selection
-                        val onClick = {
-                            if (state.isSelecting) viewModel.toggleSelection(document.id) else onOpenDocument(document.id)
-                        }
-                        if (isGrid) {
-                            DocumentGridCard(document, selected, onClick, { viewModel.toggleSelection(document.id) })
-                        } else {
-                            DocumentListItem(document, selected, onClick, { viewModel.toggleSelection(document.id) })
-                        }
+                    val selected = document.id in state.selection
+                    val onClick = {
+                        if (state.isSelecting) viewModel.toggleSelection(document.id) else onOpenDocument(document.id)
                     }
+                    if (isGrid) {
+                        DocumentGridCard(document, selected, onClick, { viewModel.toggleSelection(document.id) })
+                    } else {
+                        DocumentListItem(document, selected, onClick, { viewModel.toggleSelection(document.id) })
+                    }
+                }
                 }
 
                 if (previewFiles.isNotEmpty()) {
@@ -466,7 +473,7 @@ fun HomeScreen(
                 if (previewDocuments.isEmpty() && previewFiles.isEmpty() &&
                     !state.isLoading && state.folders.isEmpty()
                 ) {
-                    fullWidthItem("empty") {
+                fullWidthItem("empty") {
                         val (titleRes, messageRes, iconRes) = when {
                             state.tagFilter.isNotEmpty() -> Triple(
                                 R.string.empty_no_documents_filter,
@@ -501,7 +508,7 @@ fun HomeScreen(
                             }
                             else -> onScan
                         }
-                        EmptyState(
+                    EmptyState(
                             iconRes = iconRes,
                             title = stringResource(titleRes),
                             message = stringResource(messageRes),
@@ -1315,8 +1322,8 @@ private fun SectionHeader(
             .fillMaxWidth()
             .padding(top = 10.dp, bottom = 4.dp),
     ) {
-        Text(
-            text,
+    Text(
+        text,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
@@ -1324,13 +1331,13 @@ private fun SectionHeader(
         if (onViewMore != null) {
             Text(
                 stringResource(R.string.view_more),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .clickable(onClick = onViewMore)
                     .padding(horizontal = 8.dp, vertical = 4.dp),
-            )
+    )
         }
     }
 }
@@ -1478,4 +1485,4 @@ private fun SelectionTopBar(
             }
         },
     )
-}
+    }

@@ -1,11 +1,7 @@
 package com.yondex.archivo.ui.navigation
 
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -38,21 +34,14 @@ fun ArchivoBottomBar(
         TabSpec(MainTab.Qr, R.drawable.ic_qrcode, R.string.nav_qr),
         TabSpec(MainTab.Settings, R.drawable.ic_settings, R.string.nav_settings),
     )
-    Column(
-        modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .navigationBarsPadding(),
-    ) {
-        SketchBottomBar {
-            tabs.forEach { spec ->
-                SketchBottomNavItem(
-                    selected = selected == spec.tab,
-                    onClick = { onSelect(spec.tab) },
-                    iconRes = spec.iconRes,
-                    label = stringResource(spec.labelRes),
-                )
-            }
+    SketchBottomBar(modifier = modifier.fillMaxWidth()) {
+        tabs.forEach { spec ->
+            SketchBottomNavItem(
+                selected = selected == spec.tab,
+                onClick = { onSelect(spec.tab) },
+                iconRes = spec.iconRes,
+                label = stringResource(spec.labelRes),
+            )
         }
     }
 }

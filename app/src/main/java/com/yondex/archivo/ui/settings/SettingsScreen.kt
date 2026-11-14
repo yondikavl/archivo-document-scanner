@@ -72,6 +72,7 @@ import com.yondex.archivo.ui.components.SketchSheetDragHandle
 import com.yondex.archivo.ui.label
 import com.yondex.archivo.ui.legal.LegalDocument
 import com.yondex.archivo.ui.legal.LegalDocumentSheet
+import com.yondex.archivo.ui.navigation.LocalBottomNavInset
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -99,6 +100,7 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     var legalDoc by remember { mutableStateOf<LegalDocument?>(null) }
 
+    val bottomNavInset = LocalBottomNavInset.current
     Box(Modifier.fillMaxSize()) {
         DayNightCornerOrb()
         Scaffold(
@@ -123,7 +125,8 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                     .fillMaxSize()
                     .padding(padding)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
+                    .padding(bottom = bottomNavInset),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
             SettingsGroup(
